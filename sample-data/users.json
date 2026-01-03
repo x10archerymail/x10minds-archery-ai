@@ -1,0 +1,38 @@
+[
+  {
+    "uid": "user_001_archer",
+    "displayName": "Kim Woo-jin",
+    "email": "kim.woojin@example.com",
+    "photoURL": "https://example.com/profiles/kim.jpg",
+    "subscriptionTier": "Pro",
+    "stats": {
+      "avgScore": 29.5,
+      "arrowsShot": 15400,
+      "trainingHours": 450
+    },
+    "equipment": {
+      "bowType": "Recurve",
+      "drawWeight": "46lbs",
+      "arrowLength": "29.5 inches",
+      "stabilizer": "30 inch long rod"
+    },
+    "archeryType": "Olympic Recurve"
+  },
+  {
+    "uid": "user_002_beginner",
+    "displayName": "Alice Smith",
+    "email": "alice@example.com",
+    "photoURL": null,
+    "subscriptionTier": "Free",
+    "stats": {
+      "avgScore": 18.2,
+      "arrowsShot": 120,
+      "trainingHours": 5
+    },
+    "equipment": {
+      "bowType": "Barebow",
+      "drawWeight": "20lbs"
+    },
+    "archeryType": "Barebow"
+  }
+]

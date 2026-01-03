@@ -1,0 +1,34 @@
+[
+  {
+    "id": "spt_core_stability_01",
+    "name": "Core Stability & Scapular Lock",
+    "difficulty": "Intermediate",
+    "target": "Core",
+    "exercises": [
+      {
+        "name": "Plank Low Row",
+        "category": "STRENGTH",
+        "sets": 3,
+        "reps": "12",
+        "duration": 0,
+        "description": "Start in a plank position with dumbbells. Row one arm up while keeping hips square to the ground. Maintain core tightness."
+      },
+      {
+        "name": "Scapular Pushups",
+        "category": "WARMUP",
+        "sets": 2,
+        "reps": "15",
+        "duration": 0,
+        "description": "In pushup position, keep elbows locked. Drop chest towards floor by squeezing shoulder blades together, then push back up by separating them."
+      },
+      {
+        "name": "SPT Hold (Alignment)",
+        "category": "SPT",
+        "sets": 4,
+        "reps": "0",
+        "duration": 30,
+        "description": "Draw your bow (or stretch band) to holding position. Maintain perfect T-alignment. Focus on expanding through the clicker zone without collapsing."
+      }
+    ]
+  }
+]

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X10Minds | Advanced Archery AI Coach</title>
+    <meta name="description" content="AI-powered archery coaching. Biomechanics analysis, SPT generation, and mental training.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script> <!-- Placeholder for icons -->
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">X10<span class="accent">Minds</span></div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#pricing">Pricing</a>
+            <button class="btn-primary">Get Started</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1 class="glitch-text" data-text="PERFECT YOUR SHOT">PERFECT YOUR SHOT</h1>
+            <p class="subtitle">The world's first AGI-powered archery coach. Real-time biomechanics analysis, personalized training plans, and elite mental coaching.</p>
+            <div class="hero-buttons">
+                <button class="btn-primary">Analyze My Form <i class="fas fa-arrow-right"></i></button>
+                <button class="btn-secondary">Watch Demo</button>
+            </div>
+            <div class="stats-row">
+                <div class="stat">
+                    <span class="stat-number">98%</span>
+                    <span class="stat-label">Accuracy</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">Availability</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">Elite</span>
+                    <span class="stat-label">Coaching</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <!-- Simulated AI Overlay -->
+            <div class="ai-overlay">
+                <div class="scan-line"></div>
+                <div class="joint-marker head" style="top: 20%; left: 50%;"></div>
+                <div class="joint-marker shoulder" style="top: 35%; left: 45%;"></div>
+                <div class="joint-marker elbow" style="top: 35%; left: 70%;"></div>
+                <div class="connection-line"></div>
+                <div class="analysis-box">
+                    <span class="label">ELBOW ALIGNMENT</span>
+                    <span class="value error">5° HIGH</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Preview (Code Structure Demo) -->
+    <section id="demo" class="demo-section">
+        <h2>Powered by Gemini Vision</h2>
+        <div class="code-preview">
+            <div class="code-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span class="filename">ai-core.js</span>
+            </div>
+            <pre><code>
+<span class="keyword">async function</span> <span class="function">analyzeForm</span>(image) {
+  <span class="comment">// 1. Identify Joint Coordinates</span>
+  <span class="keyword">const</span> joints = <span class="keyword">await</span> vision.detectJoints(image);
+  
+  <span class="comment">// 2. Calculate Bio-Angles</span>
+  <span class="keyword">const</span> shoulderAngle = calculateAngle(joints.shoulder, joints.elbow);
+  
+  <span class="comment">// 3. Generate Feedback</span>
+  <span class="keyword">if</span> (shoulderAngle > <span class="number">12</span>) {
+    <span class="keyword">return</span> <span class="string">"Lower your drawing elbow by 2 inches."</span>;
+  }
+  
+  <span class="keyword">return</span> <span class="string">"Perfect alignment. Execute shot."</span>;
+}
+            </code></pre>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 X10Minds. Built by Archers for Archers.</p>
+    </footer>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
