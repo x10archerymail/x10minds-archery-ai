@@ -1,0 +1,348 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if the user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Check if user is an admin
+    // Option 1: Using Custom Claims (Recommended - set via Firebase Admin SDK)
+    // Option 2: Using email whitelist (easier to set up)
+    function isAdmin() {
+      return isAuthenticated() && (
+        // Custom claim check
+        request.auth.token.admin == true ||
+        // Email whitelist
+        request.auth.token.email in [
+          'nikunj@x10minds.com',
+          'admin@x10minds.com',
+          'support@x10minds.com'
+        ]
+      );
+    }
+    
+    // Check if a field is not being modified
+    function fieldUnchanged(field) {
+      return !(field in request.resource.data) || 
+             request.resource.data[field] == resource.data[field];
+    }
+    
+    // Validate timestamp is server time
+    function isValidTimestamp(field) {
+      return request.resource.data[field] == request.time;
+    }
+    
+    // ============================================
+    // USER PROFILES
+    // ============================================
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Users can create their own profile
+      allow create: if isOwner(userId) && validateUserProfile();
+      
+      // Users can update their own profile (with restrictions)
+      allow update: if isOwner(userId) && validateUserProfileUpdate();
+      
+      // Users cannot delete their profile (handled via Cloud Function)
+      allow delete: if false;
+      
+      // Admins can read all user profiles
+      allow read: if isAdmin();
+      
+      // Validate user profile data on create
+      function validateUserProfile() {
+        let data = request.resource.data;
+        return data.keys().hasAll(['email', 'fullName', 'createdAt']) &&
+               data.email == request.auth.token.email &&
+               data.createdAt == request.time;
+      }
+      
+      // Validate user profile updates (prevent modifying critical fields)
+      function validateUserProfileUpdate() {
+        // Prevent changing email/uid unless admin
+        return fieldUnchanged('email') &&
+               fieldUnchanged('createdAt') &&
+               fieldUnchanged('uid');
+      }
+    }
+    
+    // ============================================
+    // CHAT SESSIONS & MESSAGES
+    // ============================================
+    match /chats/{chatId} {
+      // Users can read their own chats
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can create new chats
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid &&
+                    validateChatCreate();
+      
+      // Users can update their own chats
+      allow update: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own chats
+      allow delete: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // Admins can read all chats
+      allow read: if isAdmin();
+      
+      function validateChatCreate() {
+        let data = request.resource.data;
+        return data.keys().hasAll(['userId', 'createdAt', 'title']) &&
+               data.userId == request.auth.uid;
+      }
+      
+      // Sub-collection: Messages within a chat
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && 
+                    get(/databases/$(database)/documents/chats/$(chatId)).data.userId == request.auth.uid;
+        allow create: if isAuthenticated() && 
+                      get(/databases/$(database)/documents/chats/$(chatId)).data.userId == request.auth.uid;
+        allow update: if isAuthenticated() && 
+                      get(/databases/$(database)/documents/chats/$(chatId)).data.userId == request.auth.uid;
+        allow delete: if isAuthenticated() && 
+                      get(/databases/$(database)/documents/chats/$(chatId)).data.userId == request.auth.uid;
+        allow read: if isAdmin();
+      }
+    }
+    
+    // ============================================
+    // SUBSCRIPTIONS & PAYMENTS
+    // ============================================
+    match /subscriptions/{subscriptionId} {
+      // Users can read their own subscriptions
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Only server (Cloud Functions) can create/update subscriptions
+      // This is handled via Stripe webhooks
+      allow create, update, delete: if false;
+      
+      // Admins can read all subscriptions
+      allow read: if isAdmin();
+    }
+    
+    match /payments/{paymentId} {
+      // Users can read their own payments
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Only server can create payment records
+      allow create, update, delete: if false;
+      
+      // Admins can read all payments
+      allow read: if isAdmin();
+    }
+    
+    match /invoices/{invoiceId} {
+      // Users can read their own invoices
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Only server can manage invoices
+      allow create, update, delete: if false;
+      
+      // Admins can read all invoices
+      allow read: if isAdmin();
+    }
+    
+    // ============================================
+    // ANALYTICS & USAGE DATA
+    // ============================================
+    match /usage/{userId} {
+      // Users can read their own usage data
+      allow read: if isOwner(userId);
+      
+      // Users can update their own usage (token counts, etc.)
+      allow update: if isOwner(userId);
+      
+      // System creates initial usage record
+      allow create: if isOwner(userId);
+      
+      // Admins can read all usage data
+      allow read: if isAdmin();
+    }
+    
+    match /analytics/{docId} {
+      // Only admins can read analytics
+      allow read: if isAdmin();
+      
+      // Only server can write analytics
+      allow create, update, delete: if false;
+    }
+    
+    // ============================================
+    // SCORES & LEADERBOARD
+    // ============================================
+    match /scores/{scoreId} {
+      // Anyone authenticated can read scores (for leaderboard)
+      allow read: if isAuthenticated();
+      
+      // Users can create their own scores
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Users can update their own scores
+      allow update: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own scores
+      allow delete: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================
+    // EXERCISE PLANS
+    // ============================================
+    match /exercise_plans/{planId} {
+      // Users can read their own exercise plans
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can create exercise plans
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Users can update/delete their own plans
+      allow update, delete: if isAuthenticated() && 
+                            resource.data.userId == request.auth.uid;
+      
+      // Admins can read all
+      allow read: if isAdmin();
+    }
+    
+    // ============================================
+    // BUG REPORTS & FEEDBACK
+    // ============================================
+    match /bug_reports/{reportId} {
+      // Any authenticated user can create a bug report
+      allow create: if isAuthenticated() && validateBugReport();
+      
+      // Users can read their own reports
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Only admins can read all and update status
+      allow read, update, delete: if isAdmin();
+      
+      function validateBugReport() {
+        let data = request.resource.data;
+        return data.keys().hasAll(['description', 'userId', 'createdAt']) &&
+               data.userId == request.auth.uid;
+      }
+    }
+    
+    match /feedback/{feedbackId} {
+      // Any authenticated user can submit feedback
+      allow create: if isAuthenticated();
+      
+      // Only admins can read feedback
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // ============================================
+    // GENERATED IMAGES
+    // ============================================
+    match /generated_images/{imageId} {
+      // Users can read their own generated images
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can create (generate) images
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own images
+      allow delete: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // Admins can read all
+      allow read: if isAdmin();
+    }
+    
+    // ============================================
+    // COOKIE PREFERENCES
+    // ============================================
+    match /cookie_preferences/{userId} {
+      // Users can read and write their own cookie preferences
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ============================================
+    // APP SETTINGS (User Preferences)
+    // ============================================
+    match /settings/{userId} {
+      // Users can read and write their own settings
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ============================================
+    // SESSIONS (for multi-device login tracking)
+    // ============================================
+    match /sessions/{sessionId} {
+      // Users can read their own sessions
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can create new sessions (login)
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their sessions (logout from device)
+      allow delete: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // Admins can view all sessions
+      allow read: if isAdmin();
+    }
+    
+    // ============================================
+    // ADMIN-ONLY COLLECTIONS
+    // ============================================
+    
+    // Dashboard statistics
+    match /admin_stats/{docId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // System configuration
+    match /system_config/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // User reports (for moderation)
+    match /user_reports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // ============================================
+    // NOTIFICATIONS
+    // ============================================
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can mark notifications as read
+      allow update: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid &&
+                    request.resource.data.keys().hasOnly(['read', 'readAt']);
+      
+      // Only server can create notifications
+      allow create, delete: if false;
+      
+      // Admins can manage all
+      allow read, write: if isAdmin();
+    }
+  }
+}

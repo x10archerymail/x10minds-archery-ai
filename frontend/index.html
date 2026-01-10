@@ -1,104 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X10Minds | Advanced Archery AI Coach</title>
-    <meta name="description" content="AI-powered archery coaching. Biomechanics analysis, SPT generation, and mental training.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script> <!-- Placeholder for icons -->
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>X10Minds - AI Archery Coach</title>
+    <meta name="description" content="X10Minds is an Artificial General Intelligence designed to coach archers. We provide biomechanical analysis, training plans, and mental support for elite performance." />
+    <link rel="icon" type="image/png" href="/images/X10Mindsfevicon.png" />
+    <script>
+      window.tailwind.config = {
+        theme: {
+          extend: {
+            screens: {
+              "3xl": "1920px",
+              "4xl": "2560px",
+              "5xl": "3840px",
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400..900&family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html {
+        scroll-behavior: smooth;
+        background-color: #000;
+      }
+      body {
+        font-family: "Outfit", "Inter", system-ui, -apple-system, sans-serif;
+        background-color: #000;
+        color: #fff;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      .font-orbitron {
+        font-family: "Orbitron", sans-serif;
+      }
+      
+      /* Premium Background */
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+          radial-gradient(circle at 20% 30%, rgba(234, 88, 12, 0.05) 0%, transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+        pointer-events: none;
+        z-index: -1;
+      }
 
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="logo">X10<span class="accent">Minds</span></div>
-        <div class="nav-links">
-            <a href="#features">Features</a>
-            <a href="#how-it-works">How It Works</a>
-            <a href="#pricing">Pricing</a>
-            <button class="btn-primary">Get Started</button>
-        </div>
-    </nav>
+      /* Custom scrollbar for chat */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
 
-    <!-- Hero Section -->
-    <header class="hero">
-        <div class="hero-content">
-            <h1 class="glitch-text" data-text="PERFECT YOUR SHOT">PERFECT YOUR SHOT</h1>
-            <p class="subtitle">The world's first AGI-powered archery coach. Real-time biomechanics analysis, personalized training plans, and elite mental coaching.</p>
-            <div class="hero-buttons">
-                <button class="btn-primary">Analyze My Form <i class="fas fa-arrow-right"></i></button>
-                <button class="btn-secondary">Watch Demo</button>
-            </div>
-            <div class="stats-row">
-                <div class="stat">
-                    <span class="stat-number">98%</span>
-                    <span class="stat-label">Accuracy</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">24/7</span>
-                    <span class="stat-label">Availability</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number">Elite</span>
-                    <span class="stat-label">Coaching</span>
-                </div>
-            </div>
-        </div>
-        <div class="hero-visual">
-            <!-- Simulated AI Overlay -->
-            <div class="ai-overlay">
-                <div class="scan-line"></div>
-                <div class="joint-marker head" style="top: 20%; left: 50%;"></div>
-                <div class="joint-marker shoulder" style="top: 35%; left: 45%;"></div>
-                <div class="joint-marker elbow" style="top: 35%; left: 70%;"></div>
-                <div class="connection-line"></div>
-                <div class="analysis-box">
-                    <span class="label">ELBOW ALIGNMENT</span>
-                    <span class="value error">5° HIGH</span>
-                </div>
-            </div>
-        </div>
-    </header>
+      /* Glassmorphism Classes */
+      .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+      
+      .glass-input {
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+      }
+      
+      .glass-input:focus {
+        border-color: rgba(234, 88, 12, 0.5);
+        box-shadow: 0 0 15px rgba(234, 88, 12, 0.2);
+      }
 
-    <!-- Dashboard Preview (Code Structure Demo) -->
-    <section id="demo" class="demo-section">
-        <h2>Powered by Gemini Vision</h2>
-        <div class="code-preview">
-            <div class="code-header">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-                <span class="filename">ai-core.js</span>
-            </div>
-            <pre><code>
-<span class="keyword">async function</span> <span class="function">analyzeForm</span>(image) {
-  <span class="comment">// 1. Identify Joint Coordinates</span>
-  <span class="keyword">const</span> joints = <span class="keyword">await</span> vision.detectJoints(image);
-  
-  <span class="comment">// 2. Calculate Bio-Angles</span>
-  <span class="keyword">const</span> shoulderAngle = calculateAngle(joints.shoulder, joints.elbow);
-  
-  <span class="comment">// 3. Generate Feedback</span>
-  <span class="keyword">if</span> (shoulderAngle > <span class="number">12</span>) {
-    <span class="keyword">return</span> <span class="string">"Lower your drawing elbow by 2 inches."</span>;
-  }
-  
-  <span class="keyword">return</span> <span class="string">"Perfect alignment. Execute shot."</span>;
-}
-            </code></pre>
-        </div>
-    </section>
+      /* CUSTOM LOADER */
+      .loader {
+        position: relative;
+        width: 120px;
+        height: 90px;
+        margin: 0 auto;
+        transform: scale(0.6);
+      }
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2025 X10Minds. Built by Archers for Archers.</p>
-    </footer>
+      .loader:before {
+        content: "";
+        position: absolute;
+        bottom: 30px;
+        left: 50px;
+        height: 30px;
+        width: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ea580c, #f97316);
+        animation: loading-bounce 0.5s ease-in-out infinite alternate;
+        box-shadow: 0 0 20px rgba(234, 88, 12, 0.4);
+      }
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/main.js"></script>
-</body>
+      .loader:after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 7px;
+        width: 45px;
+        border-radius: 4px;
+        box-shadow: 0 5px 0 #f2f2f2, -35px 50px 0 #f2f2f2, -70px 95px 0 #f2f2f2;
+        animation: loading-step 1s ease-in-out infinite;
+      }
+
+      @keyframes loading-bounce {
+        0% { transform: scale(1, 0.7); }
+        40% { transform: scale(0.8, 1.2); }
+        60% { transform: scale(1, 1); }
+        100% { bottom: 140px; }
+      }
+
+      @keyframes loading-step {
+        0% {
+          box-shadow: 0 10px 0 rgba(0, 0, 0, 0), 0 10px 0 #f2f2f2,
+            -35px 50px 0 #f2f2f2, -70px 90px 0 #f2f2f2;
+        }
+        100% {
+          box-shadow: 0 10px 0 #f2f2f2, -35px 50px 0 #f2f2f2,
+            -70px 90px 0 #f2f2f2, -70px 90px 0 rgba(0, 0, 0, 0);
+        }
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
+        50% { transform: translateY(-20px) rotateX(5deg) rotateY(5deg); }
+      }
+
+      @keyframes pulse-glow {
+        0%, 100% { opacity: 0.5; box-shadow: 0 0 0 rgba(234, 88, 12, 0); }
+        50% { opacity: 1; box-shadow: 0 0 20px rgba(234, 88, 12, 0.3); }
+      }
+
+      .animate-float {
+        animation: float 6s ease-in-out infinite;
+      }
+
+      .animate-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+      }
+
+      /* 4K and Large Screen Scaling */
+      @media (min-width: 1920px) { html { font-size: 18px; } }
+      @media (min-width: 2560px) { html { font-size: 20px; } }
+      @media (min-width: 3840px) { html { font-size: 24px; } }
+
+      /* Transitions */
+      * {
+        transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+      }
+
+      button:active {
+        transform: scale(0.95);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>

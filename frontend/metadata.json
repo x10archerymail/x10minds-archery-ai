@@ -1,0 +1,8 @@
+{
+  "name": "X10Minds AI",
+  "description": "The ultimate AI-powered archery assistant. Analyze form, generate training plans, correction images, and master your mental game with X10Minds.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
