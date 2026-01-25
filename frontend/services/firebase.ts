@@ -34,13 +34,13 @@ import {
 import { UserProfile } from '../types';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAyz9eBWNEr8etDqgGOWwVx7REalDrKNV0",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "x10minds-ai.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "x10minds-ai",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "x10minds-ai.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "367222043450",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:367222043450:web:6b3b48ae74e74de22a1603",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-RQ898S1VSK"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "your api key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "your_domain",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "your_id",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "your_storage_bucket",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "your_sender_id",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "your_app_id",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "your_measurement_id"
 };
 
 // Initialize Firebase

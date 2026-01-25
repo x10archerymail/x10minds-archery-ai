@@ -1,12 +1,12 @@
-# X10Minds – Archery AI Coach
+# Archery AI X10Minds AI - Advanced Archery Coaching Platform
 
 ![X10Minds Banner](https://images.unsplash.com/photo-1511943831776-0bf8417c8629?q=80&w=2000&auto=format&fit=crop)
 
-X10Minds is an advanced, AGI-powered archery coaching platform designed to revolutionize how archers train, analyze their form, and track progress. Built by an archer, for archers, it bridges the gap between traditional coaching and cutting-edge biomechanical analysis.
+Archery AI X10Minds AI is an advanced, AGI-powered archery coaching platform designed to revolutionize how archers train, analyze their form, and track progress. Built by an archer, for archers, it bridges the gap between traditional coaching and cutting-edge biomechanical analysis.
 
 ## 🏹 The Problem It Solves
 
-Traditional archery coaching is often expensive, inaccessible, or inconsistent. Beginners struggle with form, while elite archers lack real-time biomechanical feedback. X10Minds provides:
+Traditional archery coaching is often expensive, inaccessible, or inconsistent. Beginners struggle with form, while elite archers lack real-time biomechanical feedback. Archery AI X10Minds AI provides:
 
 - **Instant Form Analysis**: No more guessing if your anchor point is consistent.
 - **Data-Driven Training**: Personalized SPT (Specific Physical Training) plans based on your muscle groups.
@@ -81,7 +81,7 @@ This project is licensed under the **Apache License 2.0**. See the [LICENSE](LIC
 
 ## 🧑‍💻 Special Note
 
-X10Minds is built with a deep understanding of archery politics and coaching gaps. It's not just "another AI wrapper"; it's a solution built on real biomechanical principles and competitive experience.
+Archery AI X10Minds AI is built with a deep understanding of archery politics and coaching gaps. It's not just "another AI wrapper"; it's a solution built on real biomechanical principles and competitive experience.
 
 ## 📞 Contact / Website
 

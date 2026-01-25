@@ -1,8 +1,8 @@
 {
-  "name": "x10minds",
+  "name": "archery-ai-x10minds-ai",
   "version": "1.0.0",
-  "description": "The ultimate AI-powered archery assistant",
-  "author": "X10Minds",
+  "description": "Archery AI X10Minds AI - The ultimate AI-powered archery assistant",
+  "author": "Archery AI X10Minds AI",
   "type": "module",
   "scripts": {
     "dev": "vite",

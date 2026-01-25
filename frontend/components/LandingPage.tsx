@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Target,
   Zap,
@@ -74,9 +74,17 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 className="w-full h-full object-contain filter group-hover:brightness-110 transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-6"
               />
             </div>
-            <div className="flex font-black tracking-tight text-xl uppercase font-orbitron">
-              <span className="text-white">X10</span>
-              <span className="text-yellow-400">MINDS</span>
+            <div className="flex flex-col items-start leading-none font-orbitron">
+              <span className="text-[7px] font-black tracking-[0.2em] text-white/40">
+                ARCHERY AI
+              </span>
+              <div className="flex font-black tracking-tight text-lg uppercase">
+                <span className="text-white">X10</span>
+                <span className="text-yellow-400">MINDS</span>
+                <span className="ml-1 text-[7px] self-end mb-0.5 text-white/40">
+                  AI
+                </span>
+              </div>
             </div>
           </div>
 
@@ -164,11 +172,11 @@ const LandingPage: React.FC<LandingPageProps> = ({
           <div className="flex items-center gap-3">
             <img
               src="/images/X10Minds logo.png"
-              alt="X10Minds Logo"
+              alt="Archery AI X10Minds AI Logo"
               className="w-10 h-10 object-contain drop-shadow-md"
             />
             <span className="text-xl font-bold tracking-tight text-white">
-              X10Minds
+              Archery AI X10Minds AI
             </span>
           </div>
           <button
@@ -274,8 +282,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
               </h1>
 
               <p className="text-lg md:text-2xl text-neutral-400 max-w-xl leading-relaxed font-medium">
-                X10Minds AI. A singular intelligence designed to evolve your
-                archery through biomechanical precision and adaptive coaching.
+                Archery AI X10Minds AI. A singular intelligence designed to
+                evolve your archery through biomechanical precision and adaptive
+                coaching.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
@@ -371,8 +380,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
                 Omniscient General Intelligence
               </h2>
               <p className="text-neutral-400 max-w-2xl mx-auto">
-                X10Minds AI combines specialized sports science with universal
-                knowledge to solve any task with absolute perfection.
+                Archery AI X10Minds AI combines specialized sports science with
+                universal knowledge to solve any task with absolute perfection.
               </p>
             </div>
           </ScrollReveal>
@@ -481,7 +490,9 @@ const LandingPage: React.FC<LandingPageProps> = ({
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-neutral-800 to-transparent"></div>
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-16">
-            <h2 className="text-4xl font-bold mb-4">The X10 Workflow</h2>
+            <h2 className="text-4xl font-bold mb-4">
+              The Archery AI X10 Workflow
+            </h2>
             <p className="text-neutral-400">
               From diagnosis to podium in four simple steps.
             </p>
@@ -909,7 +920,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                   onClick={() =>
                     window.open(
                       "https://docs.x10minds.com/ai-docs.html",
-                      "_blank"
+                      "_blank",
                     )
                   }
                   className="hover:text-orange-500 transition-colors"
@@ -930,7 +941,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                   onClick={() =>
                     window.open(
                       "https://docs.x10minds.com/changelog.html",
-                      "_blank"
+                      "_blank",
                     )
                   }
                   className="hover:text-orange-500 transition-colors"

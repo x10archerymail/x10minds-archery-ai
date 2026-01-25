@@ -1,5 +1,5 @@
 /**
- * X10Minds Archery Posture Analysis Engine
+ * Archery AI X10Minds AI Archery Posture Analysis Engine
  * Uses Gemini Vision API to detect biomechanical alignment.
  */
 

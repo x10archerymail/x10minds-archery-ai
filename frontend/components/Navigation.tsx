@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Search,
   ShoppingCart,
@@ -180,11 +180,23 @@ const Navigation: React.FC<NavigationProps> = React.memo(
                   className="w-full h-full object-contain filter group-hover:brightness-110 transition-all duration-300 transform group-hover:scale-110 group-hover:rotate-6"
                 />
               </div>
-              <div className="flex font-black tracking-tight text-xl uppercase font-orbitron">
-                <span className={isDark ? "text-white" : "text-neutral-900"}>
-                  X10
+              <div className="flex flex-col items-start leading-none font-orbitron">
+                <span
+                  className={`text-[7px] font-black tracking-[0.2em] ${isDark ? "text-white/40" : "text-neutral-400"}`}
+                >
+                  ARCHERY AI
                 </span>
-                <span className="text-yellow-400">MINDS</span>
+                <div className="flex font-black tracking-tight text-lg uppercase">
+                  <span className={isDark ? "text-white" : "text-neutral-900"}>
+                    X10
+                  </span>
+                  <span className="text-yellow-400">MINDS</span>
+                  <span
+                    className={`ml-1 text-[7px] self-end mb-0.5 ${isDark ? "text-white/40" : "text-neutral-400"}`}
+                  >
+                    AI
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -245,8 +257,8 @@ const Navigation: React.FC<NavigationProps> = React.memo(
                           currentMode === tool.mode
                             ? "bg-yellow-400 text-black shadow-lg shadow-yellow-400/20"
                             : isDark
-                            ? "text-neutral-400 hover:bg-white/5 hover:text-white hover:shadow-lg hover:shadow-white/5"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-lg hover:shadow-gray-200"
+                              ? "text-neutral-400 hover:bg-white/5 hover:text-white hover:shadow-lg hover:shadow-white/5"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-lg hover:shadow-gray-200"
                         }`}
                       >
                         <tool.icon
@@ -434,8 +446,8 @@ const Navigation: React.FC<NavigationProps> = React.memo(
                         currentMode === link.mode
                           ? "bg-yellow-400 text-black shadow-xl shadow-yellow-400/30"
                           : isDark
-                          ? "bg-white/5 text-white/60 border border-white/5 active:bg-white/10"
-                          : "bg-gray-50 text-gray-600 border border-gray-200 active:bg-gray-100"
+                            ? "bg-white/5 text-white/60 border border-white/5 active:bg-white/10"
+                            : "bg-gray-50 text-gray-600 border border-gray-200 active:bg-gray-100"
                       }`}
                     >
                       <span className="text-[10px] font-black tracking-[0.15em]">
@@ -461,8 +473,8 @@ const Navigation: React.FC<NavigationProps> = React.memo(
                         currentMode === tool.mode
                           ? "bg-yellow-400/10 text-yellow-400 border border-yellow-400/20"
                           : isDark
-                          ? "bg-white/5 text-white/50 border border-white/5 active:bg-white/10"
-                          : "bg-gray-50 text-gray-500 active:bg-gray-100"
+                            ? "bg-white/5 text-white/50 border border-white/5 active:bg-white/10"
+                            : "bg-gray-50 text-gray-500 active:bg-gray-100"
                       }`}
                     >
                       <tool.icon className="w-5 h-5 text-yellow-400" />
@@ -478,7 +490,7 @@ const Navigation: React.FC<NavigationProps> = React.memo(
         </div>
       </nav>
     );
-  }
+  },
 );
 
 export default React.memo(Navigation);

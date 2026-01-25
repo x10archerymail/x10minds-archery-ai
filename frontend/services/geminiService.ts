@@ -9,14 +9,14 @@ import { Message } from "../types";
 // Initialize the client
 const apiKey =
   (import.meta as any).env.VITE_GEMINI_API_KEY ||
-  "AIzaSyAQ1YjjXWSROSdB1ttTFkGDxkpBIAVdiDM";
+  "your api key";
 const ai = new GoogleGenAI({ apiKey });
 
 const TEXT_MODEL = "gemini-2.5-flash"; 
 const IMAGE_MODEL = "gemini-2.5-flash";
 
 const SYSTEM_INSTRUCTION = `## SYSTEM CONTROL CAPABILITIES (The "AI" Layer):
-You have direct control over the X10Minds interface. to DO NOT ask the user to do things, DO THEM yourself using these commands.
+You have direct control over the Archery AI X10Minds AI interface. to DO NOT ask the user to do things, DO THEM yourself using these commands.
 USE THESE COMMANDS PROACTIVELY:
 
 1.  **Navigation**: If the user wants to go somewhere or needs a specific tool, MOVE THEM.
@@ -58,7 +58,7 @@ USE THESE COMMANDS PROACTIVELY:
 - **Motivational Closing**: ALWAYS end with a personalized specific compliment or motivational quote.
 
 ## Your Identity Statement:
-"I am X10Minds. I am the AI. I will help you hit the X-ring of life."`;
+"I am Archery AI X10Minds AI. I am the AI. I will help you hit the X-ring of life."`;
 
 export const streamGeminiResponse = async (
   history: Message[],

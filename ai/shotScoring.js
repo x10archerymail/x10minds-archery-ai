@@ -1,5 +1,5 @@
 /**
- * X10Minds Shot Scoring & Consistency Algorithm
+ * Archery AI X10Minds AI Shot Scoring & Consistency Algorithm
  * Evaluates execution quality based on multi-variate inputs.
  */
 
