@@ -493,4 +493,4 @@ const Navigation: React.FC<NavigationProps> = React.memo(
   },
 );
 
-export default React.memo(Navigation);
+export default Navigation;

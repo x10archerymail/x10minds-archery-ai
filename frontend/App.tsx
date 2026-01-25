@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Menu, AlertTriangle, ShoppingBag, ArrowRight } from "lucide-react";
+import { Menu, AlertTriangle, ShoppingBag } from "lucide-react";
 import Navigation from "./components/Navigation";
 import ChatInterface from "./components/ChatInterface";
 import Dashboard from "./components/Dashboard";
@@ -107,7 +107,7 @@ const App: React.FC = () => {
     type: NotificationType;
   } | null>(null);
   const [showRankUp, setShowRankUp] = useState<{ show: boolean; rank: string }>(
-    { show: false, rank: "" }
+    { show: false, rank: "" },
   );
 
   // Default Settings
@@ -290,8 +290,8 @@ const App: React.FC = () => {
       const baseLimit = isFree
         ? 5000
         : updated.subscriptionTier === "Charge"
-        ? 50000
-        : Infinity;
+          ? 50000
+          : Infinity;
 
       updated.tokensUsed = 0;
       updated.tokenLimit = baseLimit;
@@ -337,7 +337,7 @@ const App: React.FC = () => {
                 } benefits expire in ${daysLeft} day${
                   daysLeft !== 1 ? "s" : ""
                 }! Renew now to maintain your performance edge. 🏹`,
-                "info"
+                "info",
               );
               sessionStorage.setItem(warningKey, "true");
             }, 3000); // Delay to not overwhelm at start
@@ -354,7 +354,7 @@ const App: React.FC = () => {
         ) {
           notify(
             "Your subscription has expired. You've been moved to the Free plan. Upgrade now to continue! 🏹",
-            "info"
+            "info",
           );
         } else {
           notify("Daily limits refilled! 🎯", "success");
@@ -555,7 +555,7 @@ const App: React.FC = () => {
       if (mode === AppMode.IMAGE_GEN) {
         notify(
           "Creative Studio is available for Premium users. You can generate limited images in Chat.",
-          "error"
+          "error",
         );
         setMode(AppMode.DASHBOARD);
       }
@@ -708,7 +708,7 @@ const App: React.FC = () => {
     ) {
       notify(
         "Active subscription found. Please cancel it before deleting your account.",
-        "error" as any
+        "error" as any,
       );
       setShowDeleteConfirm(false);
       return;
@@ -732,13 +732,13 @@ const App: React.FC = () => {
       setMode(AppMode.DASHBOARD);
       notify(
         "Account permanently deleted. We're sorry to see you go. 🏹",
-        "info"
+        "info",
       );
     } catch (e: any) {
       console.error(e);
       notify(
         "Failed to delete account: " + (e.message || "Unknown error"),
-        "error" as any
+        "error" as any,
       );
     }
   };
@@ -746,7 +746,7 @@ const App: React.FC = () => {
   const handleTokenUsage = (amount: number) => {
     if (!user) return;
     setUser((prev) =>
-      prev ? { ...prev, tokensUsed: prev.tokensUsed + amount } : null
+      prev ? { ...prev, tokensUsed: prev.tokensUsed + amount } : null,
     );
   };
 
@@ -759,7 +759,7 @@ const App: React.FC = () => {
 
   const handleSubscriptionUpgrade = (
     tier: SubscriptionTier,
-    months: number = 1
+    months: number = 1,
   ) => {
     if (!user) return;
     let newLimit = 20000;
@@ -786,7 +786,7 @@ const App: React.FC = () => {
       `Upgraded to ${tier} Plan for ${months} month${
         months > 1 ? "s" : ""
       }! 🎯`,
-      "success"
+      "success",
     );
   };
 
@@ -806,7 +806,7 @@ const App: React.FC = () => {
 
       if (newLimit !== user.tokenLimit) {
         setUser((prev) =>
-          prev ? { ...prev, tokensUsed: 0, tokenLimit: newLimit } : null
+          prev ? { ...prev, tokensUsed: 0, tokenLimit: newLimit } : null,
         );
 
         setTimeout(() => {
@@ -867,7 +867,7 @@ const App: React.FC = () => {
 
     // Check if it's an exercise session (by keyword or model response content)
     const hasExerciseCommand = msgs.some((m) =>
-      m.content.includes("[SYSTEM_COMMAND:EXERCISE_DATA:")
+      m.content.includes("[SYSTEM_COMMAND:EXERCISE_DATA:"),
     );
     const isExerciseRequest =
       firstMsgLower.includes("exercise") ||
@@ -1024,10 +1024,10 @@ const App: React.FC = () => {
                   settings.accentColor === "orange"
                     ? "bg-orange-600 hover:bg-orange-700 shadow-orange-600/20"
                     : settings.accentColor === "blue"
-                    ? "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20"
-                    : settings.accentColor === "green"
-                    ? "bg-green-600 hover:bg-green-700 shadow-green-600/20"
-                    : "bg-purple-600 hover:bg-purple-700 shadow-purple-600/20"
+                      ? "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20"
+                      : settings.accentColor === "green"
+                        ? "bg-green-600 hover:bg-green-700 shadow-green-600/20"
+                        : "bg-purple-600 hover:bg-purple-700 shadow-purple-600/20"
                 }`}
               >
                 {t("logout")}
