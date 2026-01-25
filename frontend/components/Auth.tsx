@@ -164,7 +164,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, notify }) => {
 
       const updatedDevices = [...(profile.activeDevices || [])];
       const existingDeviceIndex = updatedDevices.findIndex(
-        (d) => d.deviceId === deviceId
+        (d) => d.deviceId === deviceId,
       );
 
       if (existingDeviceIndex >= 0) {
@@ -172,7 +172,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, notify }) => {
       } else {
         if (updatedDevices.length >= 3) {
           throw new Error(
-            "Device limit reached (Max 3). Please logout from other devices."
+            "Device limit reached (Max 3). Please logout from other devices.",
           );
         }
         updatedDevices.push({
@@ -257,7 +257,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, notify }) => {
     setResolver(resolver);
 
     if (resolver.hints[0]) {
-      const hint = resolver.hints[0] as PhoneMultiFactorInfo;
+      const hint = resolver.hints[0] as any;
       if (!recaptchaVerifierRef.current) {
         recaptchaVerifierRef.current =
           getRecaptchaVerifier("recaptcha-wrapper");
@@ -269,7 +269,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, notify }) => {
             multiFactorHint: hint,
             session: resolver.session,
           },
-          recaptchaVerifierRef.current
+          recaptchaVerifierRef.current,
         );
         setVerificationId(vId);
         setView("MFA_VERIFY");
@@ -324,7 +324,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, notify }) => {
         }
         const res = await loginWithPhone(
           phoneNumber,
-          recaptchaVerifierRef.current
+          recaptchaVerifierRef.current,
         );
         setConfirmationResult(res);
         setView("SMS_VERIFY");

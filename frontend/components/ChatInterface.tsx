@@ -163,10 +163,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
 
     // Speech & Editing State
     const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(
-      null
+      null,
     );
     const [editingMessageId, setEditingMessageId] = useState<string | null>(
-      null
+      null,
     );
     const [editText, setEditText] = useState("");
 
@@ -244,7 +244,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
       if (language === "Hindi") {
         preferredVoice =
           voices.find(
-            (v) => v.lang.includes("hi-IN") || v.lang.includes("hi")
+            (v) => v.lang.includes("hi-IN") || v.lang.includes("hi"),
           ) ||
           voices.find((v) => v.lang.includes("en-IN")) ||
           voices.find((v) => v.lang.includes("en"));
@@ -253,7 +253,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           voices.find(
             (v) =>
               (v.name.includes("Google") || v.name.includes("Premium")) &&
-              v.lang.includes("en")
+              v.lang.includes("en"),
           ) ||
           voices.find((v) => v.lang.includes("en")) ||
           voices[0];
@@ -298,10 +298,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
             return { ...msg, feedback: newFeedback };
           }
           return msg;
-        })
+        }),
       );
       showNotification(
-        type === "like" ? t("feedback_helpful") : t("feedback_not_helpful")
+        type === "like" ? t("feedback_helpful") : t("feedback_not_helpful"),
       );
     };
 
@@ -313,7 +313,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
 
       // Check if it was an image generation request
       const isImageRequest = lastUserMsg.content.startsWith(
-        "Generate an image for: "
+        "Generate an image for: ",
       );
 
       // Reset history to this point
@@ -355,8 +355,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                       image: imageUrl,
                       isTyping: false,
                     }
-                  : msg
-              )
+                  : msg,
+              ),
             );
           } else {
             throw new Error("Failed");
@@ -370,8 +370,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     content: "❌ Failed to regenerate image.",
                     isTyping: false,
                   }
-                : msg
-            )
+                : msg,
+            ),
           );
         } finally {
           setIsGeneratingImage(false);
@@ -382,7 +382,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
         await processGeminiResponse(
           lastUserMsg.content,
           lastUserMsg.image,
-          messages.slice(0, userMsgIndex)
+          messages.slice(0, userMsgIndex),
         );
       }
     };
@@ -443,7 +443,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
     };
 
     const handleCameraFileChange = (
-      event: React.ChangeEvent<HTMLInputElement>
+      event: React.ChangeEvent<HTMLInputElement>,
     ) => {
       const file = event.target.files?.[0];
       if (file) {
@@ -495,7 +495,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
 
     const handleGenerateImage = async (
       providedPrompt?: string,
-      targetBotMsgId?: string
+      targetBotMsgId?: string,
     ) => {
       const promptToUse = providedPrompt || input.trim();
       if (!promptToUse) {
@@ -526,7 +526,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
             id: (Date.now() + 1).toString(),
             role: "model",
             content: `🎨 **${t(
-              "limit_reached"
+              "limit_reached",
             )}** 🛑\n\nYou have used your total daily capacity of **${imageLimit} visualizations**! ✨ Archery art and biomechanical analysis require significant computing power. Upgrade for more access! 💪`,
             timestamp: Date.now(),
           },
@@ -571,8 +571,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                   content: "✨ " + t("generating_image"),
                   isTyping: true,
                 }
-              : msg
-          )
+              : msg,
+          ),
         );
       }
 
@@ -582,8 +582,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           prev.map((msg) =>
             msg.id === botMsgId
               ? { ...msg, content: "✨ Enhancing prompt details (15%)..." }
-              : msg
-          )
+              : msg,
+          ),
         );
         const elitePrompt = await enhanceImagePrompt(promptToUse);
 
@@ -595,8 +595,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                   content:
                     "🎨 Rendering high-definition visualization (45%)...",
                 }
-              : msg
-          )
+              : msg,
+          ),
         );
 
         const imageUrl = await generateImageFromPrompt(elitePrompt);
@@ -609,8 +609,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                   content:
                     "🚀 Finalizing render and applying simulated physics (88%)...",
                 }
-              : msg
-          )
+              : msg,
+          ),
         );
 
         if (imageUrl) {
@@ -626,8 +626,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     image: imageUrl,
                     isTyping: false,
                   }
-                : msg
-            )
+                : msg,
+            ),
           );
         } else {
           throw new Error("Failed to generate image URL");
@@ -642,8 +642,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     "❌ I apologize, but I encountered an error while generating your image. Please try again with a different prompt.",
                   isTyping: false,
                 }
-              : msg
-          )
+              : msg,
+          ),
         );
       } finally {
         setIsGeneratingImage(false);
@@ -668,7 +668,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
     const processGeminiResponse = async (
       text: string,
       image?: string,
-      overrideHistory?: Message[]
+      overrideHistory?: Message[],
     ) => {
       stopGeneration.current = false;
       try {
@@ -699,7 +699,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           true,
 
           selectedModel,
-          customInstructions
+          customInstructions,
         );
 
         let fullResponse = "";
@@ -714,8 +714,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           if (chunk.isSearching) {
             setMessages((prev) =>
               prev.map((msg) =>
-                msg.id === botMessageId ? { ...msg, isSearching: true } : msg
-              )
+                msg.id === botMessageId ? { ...msg, isSearching: true } : msg,
+              ),
             );
             continue;
           }
@@ -751,8 +751,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     isTyping: false,
                     thoughtTime: Date.now() - startTime,
                   }
-                : msg
-            )
+                : msg,
+            ),
           );
         }
 
@@ -761,7 +761,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           // 1. Check for Exercise Data
           if (fullResponse.includes("[SYSTEM_COMMAND:EXERCISE_DATA:")) {
             const exerciseMatch = fullResponse.match(
-              /\[SYSTEM_COMMAND:EXERCISE_DATA:!!(.*?)!!\]/s
+              /\[SYSTEM_COMMAND:EXERCISE_DATA:!!(.*?)!!\]/s,
             );
             if (exerciseMatch && exerciseMatch[1]) {
               try {
@@ -778,7 +778,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           // 2. Check for Navigation
           if (fullResponse.includes("[SYSTEM_COMMAND:NAVIGATE:")) {
             const match = fullResponse.match(
-              /\[SYSTEM_COMMAND:NAVIGATE:(\w+)\]/
+              /\[SYSTEM_COMMAND:NAVIGATE:(\w+)\]/,
             );
             if (match && match[1]) {
               const targetMode = match[1] as AppMode;
@@ -786,7 +786,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                 setTimeout(() => {
                   onNavigate?.(targetMode);
                   showNotification(
-                    `Navigating to ${targetMode.replace("_", " ")}... 🚀`
+                    `Navigating to ${targetMode.replace("_", " ")}... 🚀`,
                   );
                 }, 1500);
               }
@@ -814,7 +814,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           // 5. Check for Image Generation
           if (fullResponse.includes("[SYSTEM_COMMAND:GENERATE_IMAGE:")) {
             const imgMatch = fullResponse.match(
-              /\[SYSTEM_COMMAND:GENERATE_IMAGE:(.*?)\]/
+              /\[SYSTEM_COMMAND:GENERATE_IMAGE:(.*?)\]/,
             );
             if (imgMatch && imgMatch[1]) {
               const prompt = imgMatch[1].trim();
@@ -828,7 +828,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           // 6. Check for Notifications
           if (fullResponse.includes("[SYSTEM_COMMAND:NOTIFY:")) {
             const noteMatch = fullResponse.match(
-              /\[SYSTEM_COMMAND:NOTIFY:(.*?)\]/
+              /\[SYSTEM_COMMAND:NOTIFY:(.*?)\]/,
             );
             if (noteMatch && noteMatch[1]) {
               showNotification(noteMatch[1].trim());
@@ -861,7 +861,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           const lastMsg = prev[prev.length - 1];
           if (lastMsg && lastMsg.role === "model" && lastMsg.isTyping) {
             return prev.map((msg) =>
-              msg.id === lastMsg.id ? { ...msg, isTyping: false } : msg
+              msg.id === lastMsg.id ? { ...msg, isTyping: false } : msg,
             );
           }
           return prev;
@@ -909,13 +909,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
             id: (Date.now() + 1).toString(),
             role: "model",
             content: `**${t(
-              "limit_reached"
+              "limit_reached",
             )}** 🛑\n\nYou have used your total daily capacity of **${
               userProfile.tokenLimit
             } tokens**. \n\n### 🚀 ${t(
-              "upgrade_plan"
+              "upgrade_plan",
             )}\nTo keep training with X10Minds and access unlimited coaching, biomechanic analysis, and HD visualizations, please consider upgrading to a premium tier.\n\n[${t(
-              "view_plans"
+              "view_plans",
             )}](#upgrade)`,
             timestamp: Date.now(),
             isTyping: false,
@@ -948,7 +948,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
       await processGeminiResponse(
         userMessage.content,
         imageToSend || undefined,
-        currentHistory
+        currentHistory,
       );
     };
 
@@ -1129,7 +1129,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
               const endIndex = displayContent.indexOf(sptEndTag);
               const jsonString = displayContent.substring(
                 startIndex + sptStartTag.length,
-                endIndex
+                endIndex,
               );
               try {
                 sptPlanJson = JSON.parse(jsonString);
@@ -1257,14 +1257,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                             isUser
                               ? "prose-invert prose-p:text-white prose-strong:text-yellow-300"
                               : isDark
-                              ? "prose-invert prose-p:text-neutral-200 prose-headings:text-white"
-                              : "prose-p:text-gray-800 prose-headings:text-gray-950"
+                                ? "prose-invert prose-p:text-neutral-200 prose-headings:text-white"
+                                : "prose-p:text-gray-800 prose-headings:text-gray-950"
                           }`}
                         >
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
-                              table: ({ node, ...props }) => (
+                              table: ({ node, ...props }: any) => (
                                 <div className="my-6 rounded-xl border border-neutral-700/50 overflow-hidden bg-neutral-900/50">
                                   <div className="flex items-center justify-between gap-2 px-4 py-2 bg-neutral-800/50 border-b border-neutral-700/50">
                                     <div className="flex items-center gap-2">
@@ -1288,25 +1288,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                                   </div>
                                 </div>
                               ),
-                              thead: ({ node, ...props }) => (
+                              thead: ({ node, ...props }: any) => (
                                 <thead
                                   className="bg-neutral-800/50 text-neutral-300 font-bold uppercase tracking-wider text-xs"
                                   {...props}
                                 />
                               ),
-                              th: ({ node, ...props }) => (
+                              th: ({ node, ...props }: any) => (
                                 <th
                                   className="px-4 py-3 border-b border-neutral-700"
                                   {...props}
                                 />
                               ),
-                              td: ({ node, ...props }) => (
+                              td: ({ node, ...props }: any) => (
                                 <td
                                   className="px-4 py-3 border-b border-neutral-800/50"
                                   {...props}
                                 />
                               ),
-                              tr: ({ node, ...props }) => (
+                              tr: ({ node, ...props }: any) => (
                                 <tr
                                   className="hover:bg-neutral-800/30 transition-colors"
                                   {...props}
@@ -1699,8 +1699,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                         tool.active
                           ? tool.activeColor
                           : isDark
-                          ? `text-neutral-400 active:text-orange-400 active:bg-white/10`
-                          : `text-gray-500 active:text-orange-600 active:bg-gray-100`
+                            ? `text-neutral-400 active:text-orange-400 active:bg-white/10`
+                            : `text-gray-500 active:text-orange-600 active:bg-gray-100`
                       } ${
                         tool.disabled
                           ? "opacity-20 cursor-not-allowed"
@@ -1810,8 +1810,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     isLimitReached
                       ? t("limit_reached")
                       : isListening
-                      ? "Listening..."
-                      : t("type_message")
+                        ? "Listening..."
+                        : t("type_message")
                   }
                   className={`flex-1 bg-transparent px-2 md:px-4 py-3 md:py-4 min-h-[44px] md:min-h-[56px] max-h-32 md:max-h-56 focus:outline-none resize-none font-medium text-sm md:text-base tracking-tight leading-relaxed ${
                     isLimitReached ? "cursor-not-allowed opacity-30" : ""
@@ -1864,7 +1864,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 export default ChatInterface;

@@ -38,10 +38,10 @@ const ExerciseAnimator = React.memo<{
     accentColor === "blue"
       ? "#3b82f6"
       : accentColor === "green"
-      ? "#22c55e"
-      : accentColor === "purple"
-      ? "#a855f7"
-      : "#ea580c";
+        ? "#22c55e"
+        : accentColor === "purple"
+          ? "#a855f7"
+          : "#ea580c";
 
   // Static display for exercise types
   return (
@@ -114,10 +114,10 @@ const PlanListItem = React.memo<{
         isActive
           ? `${accentBg} border-transparent text-white shadow-lg scale-[1.02] z-10`
           : isDone
-          ? "opacity-40 border-transparent hover:opacity-60"
-          : isDark
-          ? "border-neutral-800 hover:border-neutral-700 text-neutral-400"
-          : "border-gray-100 hover:border-gray-200 text-gray-400"
+            ? "opacity-40 border-transparent hover:opacity-60"
+            : isDark
+              ? "border-neutral-800 hover:border-neutral-700 text-neutral-400"
+              : "border-gray-100 hover:border-gray-200 text-gray-400"
       }`}
     >
       <div
@@ -137,11 +137,11 @@ const PlanListItem = React.memo<{
         </p>
         <p className="text-[10px] font-bold uppercase opacity-60">
           {ex.sets} {t("sets_label")} •{" "}
-          {ex.duration > 0 ? `${ex.duration}s` : ex.reps}
+          {(ex.duration ?? 0) > 0 ? `${ex.duration}s` : ex.reps}
         </p>
       </div>
     </button>
-  )
+  ),
 );
 
 const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
@@ -197,10 +197,10 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
       accentColor === "blue"
         ? "bg-blue-600"
         : accentColor === "green"
-        ? "bg-green-600"
-        : accentColor === "purple"
-        ? "bg-purple-600"
-        : "bg-orange-600";
+          ? "bg-green-600"
+          : accentColor === "purple"
+            ? "bg-purple-600"
+            : "bg-orange-600";
 
     const handleGenerate = async () => {
       setIsLoading(true);
@@ -220,7 +220,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                 (e: Exercise, i: number) =>
                   `${i + 1}. **${e.name}**\n   - ${e.sets} sets x ${
                     e.reps && e.reps !== "0" ? e.reps : e.duration + "s"
-                  }\n   - ${e.description}`
+                  }\n   - ${e.description}`,
               )
               .join("\n\n");
 
@@ -236,9 +236,9 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
             content:
               planText +
               `\n\n<details><summary>System Data</summary>\n\n\`\`\`json\n${JSON.stringify(
-                parsed
+                parsed,
               )}\n\`\`\`\n</details>\n\n[OPEN_SPT_PLAN]${JSON.stringify(
-                parsed
+                parsed,
               )}[/OPEN_SPT_PLAN]`,
             timestamp: Date.now(),
           };
@@ -281,9 +281,9 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
       } else if (
         timer === 0 &&
         isPlaying &&
-        !isPaused &&
         plan &&
-        plan[currentStep]?.duration > 0
+        plan[currentStep] &&
+        (plan[currentStep].duration ?? 0) > 0
       ) {
         // Auto advance for duration-based exercises if not last step
         if (currentStep < plan.length - 1) {
@@ -353,8 +353,8 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                           bodyPart === part
                             ? `${accentBg} border-transparent text-white shadow-lg`
                             : isDark
-                            ? "bg-neutral-800/50 border-neutral-800 text-neutral-400 hover:border-neutral-700"
-                            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                              ? "bg-neutral-800/50 border-neutral-800 text-neutral-400 hover:border-neutral-700"
+                              : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
                         }`}
                       >
                         {part}
@@ -459,7 +459,9 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                               className={`text-sm tracking-wide font-medium ${subText}`}
                             >
                               {ex.sets} {t("sets_label")} •{" "}
-                              {ex.duration > 0 ? `${ex.duration}s` : ex.reps}
+                              {(ex.duration ?? 0) > 0
+                                ? `${ex.duration}s`
+                                : ex.reps}
                             </p>
                             <p
                               className={`text-xs mt-2 max-w-md ${subText} opacity-70 line-clamp-3 hover:line-clamp-none cursor-pointer transition-all`}
@@ -551,7 +553,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                                     </span>
                                   </div>
                                 </button>
-                              )
+                              ),
                             )}
                             {(!PREDEFINED_PLANS[level]?.[bodyPart] ||
                               PREDEFINED_PLANS[level][bodyPart].length ===
@@ -881,7 +883,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                     {activeEx.sets} x{" "}
                     {activeEx.reps && activeEx.reps !== "0"
                       ? activeEx.reps
-                      : `${activeEx.duration}s`}
+                      : `${activeEx.duration ?? 0}s`}
                   </p>
                 </div>
                 <div
@@ -898,12 +900,12 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                   </p>
                   <p
                     className={`text-xl font-black ${
-                      activeEx.duration > 0 && timer > 0
+                      (activeEx.duration ?? 0) > 0 && timer > 0
                         ? "text-orange-500"
                         : headerText
                     }`}
                   >
-                    {activeEx.duration > 0 ? `${timer}s` : t("manual")}
+                    {(activeEx.duration ?? 0) > 0 ? `${timer}s` : t("manual")}
                   </p>
                 </div>
               </div>
@@ -991,7 +993,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
       `}</style>
       </div>
     );
-  }
+  },
 );
 
 export default ExerciseView;

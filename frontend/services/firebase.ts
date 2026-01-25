@@ -70,11 +70,11 @@ const isPlaceholder = firebaseConfig.projectId === "your_id";
 
 // Helper to wait for auth to settle on reload
 const waitForAuthInit = () => {
-  return new Promise<User | null>((resolve) => {
-      const unsubscribe = auth.onAuthStateChanged(user => {
+  return new Promise<any | null>((resolve) => {
+      const unsubscribe = auth.onAuthStateChanged((user: any) => {
           unsubscribe();
           resolve(user);
-      }, (error) => {
+      }, (error: any) => {
           console.error("Auth init error", error);
           resolve(null);
       });
@@ -141,7 +141,7 @@ export const logoutFirebase = async () => {
   await signOut(auth);
 };
 
-export const loginWithPhone = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier) => {
+export const loginWithPhone = async (phoneNumber: string, recaptchaVerifier: any) => {
   if (isPlaceholder) throw new Error("Please configure credentials.");
   return await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
 };
@@ -328,13 +328,13 @@ export const deleteUserAccount = async () => {
 
 // --- MFA FUNCTIONS ---
 
-export const getRecaptchaVerifier = (containerId: string, size: 'invisible' | 'normal' = 'invisible') => {
+export const getRecaptchaVerifier = (containerId: string, size: 'invisible' | 'normal' = 'invisible'): any => {
   return new RecaptchaVerifier(auth, containerId, {
     size: size,
   });
 };
 
-export const startMfaEnrollment = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier) => {
+export const startMfaEnrollment = async (phoneNumber: string, recaptchaVerifier: any) => {
   const user = auth.currentUser;
   if (!user) throw new Error("No user logged in");
 
