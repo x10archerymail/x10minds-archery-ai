@@ -55,7 +55,7 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' &&
   // This enables App Check for Firestore and Auth requests
   try {
     const appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider('6LeEbzQsAAAAAG52lmIle1oVEx8XGTs9XJOVQ1fz'),
+      provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY || 'your_recaptcha_site_key'),
       isTokenAutoRefreshEnabled: true
     });
   } catch (e) {
@@ -65,9 +65,8 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' &&
   console.log("App Check skipped on localhost.");
 }
 
-// This checks if we are still using the old placeholder ID. 
-// Since the projectId is now "x10minds-ai", this will be false, enabling real Auth functions.
-const isPlaceholder = firebaseConfig.projectId === "studio-3934682319-a1fe4";
+// This checks if we are using placeholder credentials
+const isPlaceholder = firebaseConfig.projectId === "your_id";
 
 // Helper to wait for auth to settle on reload
 const waitForAuthInit = () => {
