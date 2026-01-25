@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import * as React from "react";
+import { useState } from "react";
 import { Calculator } from "lucide-react";
 import ScoringView from "./ScoringView";
 import { ScoreData } from "../types";
@@ -33,22 +34,37 @@ const CalculatorView: React.FC<CalculatorViewProps> = ({
 
   // Maps for dynamic color classes
   const colors: Record<string, string> = {
-    orange: "bg-orange-600 hover:bg-orange-500",
+    orange: "bg-[#FFD700] hover:bg-[#FDB931]",
     blue: "bg-blue-600 hover:bg-blue-500",
     green: "bg-green-600 hover:bg-green-500",
     purple: "bg-purple-600 hover:bg-purple-500",
+    red: "bg-red-600 hover:bg-red-500",
+    pink: "bg-pink-600 hover:bg-pink-500",
+    teal: "bg-teal-600 hover:bg-teal-500",
+    cyan: "bg-cyan-600 hover:bg-cyan-500",
+    indigo: "bg-indigo-600 hover:bg-indigo-500",
   };
   const textColors: Record<string, string> = {
-    orange: "text-orange-500",
+    orange: "text-[#FFD700]",
     blue: "text-blue-500",
     green: "text-green-500",
     purple: "text-purple-500",
+    red: "text-red-500",
+    pink: "text-pink-500",
+    teal: "text-teal-500",
+    cyan: "text-cyan-500",
+    indigo: "text-indigo-500",
   };
   const borderColors: Record<string, string> = {
-    orange: "focus:border-orange-500 hover:border-orange-500/50",
+    orange: "focus:border-[#FFD700] hover:border-[#FFD700]/50",
     blue: "focus:border-blue-500 hover:border-blue-500/50",
     green: "focus:border-green-500 hover:border-green-500/50",
     purple: "focus:border-purple-500 hover:border-purple-500/50",
+    red: "focus:border-red-500 hover:border-red-500/50",
+    pink: "focus:border-pink-500 hover:border-pink-500/50",
+    teal: "focus:border-teal-500 hover:border-teal-500/50",
+    cyan: "focus:border-cyan-500 hover:border-cyan-500/50",
+    indigo: "focus:border-indigo-500 hover:border-indigo-500/50",
   };
 
   const isDark = themeMode === "dark";
@@ -56,7 +72,9 @@ const CalculatorView: React.FC<CalculatorViewProps> = ({
 
   const headerText = isDark ? "text-white" : "text-gray-900";
   const subText = isDark ? "text-neutral-400" : "text-gray-500";
-  const inputBg = isDark ? "bg-black" : "bg-gray-100";
+  const inputBg = isDark
+    ? "bg-white/5 border-white/10 hover:bg-white/10 transition-all text-white placeholder:text-neutral-500 focus:border-white/20"
+    : "bg-white border-gray-200 text-gray-900 shadow-sm focus:border-gray-400";
   const inputText = isDark ? "text-white" : "text-gray-900";
 
   const btnClass = colors[accentColor] || colors.orange;
@@ -134,31 +152,31 @@ const CalculatorView: React.FC<CalculatorViewProps> = ({
         </div>
 
         <div
-          className={`flex rounded-lg p-1 border self-start md:self-auto ${
+          className={`flex rounded-xl p-1 border self-start md:self-auto ${
             isDark
-              ? "bg-neutral-900 border-neutral-800"
-              : "bg-white border-gray-200"
+              ? "bg-black/50 border-white/5"
+              : "bg-white border-gray-100 shadow-sm"
           }`}
         >
           <button
             onClick={() => setActiveTab("SCORE")}
-            className={`px-4 md:px-6 py-2 rounded-md text-sm font-bold transition-all ${
+            className={`px-4 md:px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
               activeTab === "SCORE"
-                ? `${btnClass} text-white shadow-lg`
-                : `${subText} hover:text-white`
+                ? `${btnClass} ${accentColor === "orange" ? "text-black" : "text-white"} shadow-lg`
+                : `${subText} hover:${isDark ? "text-white" : "text-gray-950"}`
             }`}
           >
-            Score Calculator
+            Session Scoring
           </button>
           <button
             onClick={() => setActiveTab("FORMULAS")}
-            className={`px-4 md:px-6 py-2 rounded-md text-sm font-bold transition-all ${
+            className={`px-4 md:px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
               activeTab === "FORMULAS"
-                ? `${btnClass} text-white shadow-lg`
-                : `${subText} hover:text-white`
+                ? `${btnClass} ${accentColor === "orange" ? "text-black" : "text-white"} shadow-lg`
+                : `${subText} hover:${isDark ? "text-white" : "text-gray-950"}`
             }`}
           >
-            Formulas
+            Technical Lab
           </button>
         </div>
       </header>
@@ -171,6 +189,8 @@ const CalculatorView: React.FC<CalculatorViewProps> = ({
             onDistanceChange={setSessionDistance}
             podiums={podiums}
             onAddPodium={onAddPodium}
+            themeMode={themeMode}
+            accentColor={accentColor}
             onSave={(hits, ends, distance) => {
               const flatHits = ends.flat();
               const totalScore = flatHits.reduce((acc, h) => acc + h.score, 0);

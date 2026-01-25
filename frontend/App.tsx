@@ -1,26 +1,37 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Menu, AlertTriangle, ShoppingBag } from "lucide-react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import {
+  Menu,
+  AlertTriangle,
+  ShoppingBag,
+  ArrowRight,
+  Loader2,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "./components/Navigation";
-import ChatInterface from "./components/ChatInterface";
-import Dashboard from "./components/Dashboard";
-import AnalysisView from "./components/AnalysisView";
-import ExerciseView from "./components/ExerciseView";
-import ImageGenView from "./components/ImageGenView";
-import CalculatorView from "./components/CalculatorView";
-import ReportBug from "./components/ReportBug";
-import LandingPage from "./components/LandingPage";
-import Auth from "./components/Auth";
-import Settings from "./components/Settings";
-import HistoryView from "./components/HistoryView";
-import SubscriptionView from "./components/SubscriptionView";
-import LeaderboardView from "./components/LeaderboardView";
-import ResetPassword from "./components/ResetPassword"; // Import new component
 
-import ScheduleView from "./components/ScheduleView";
-import NewsView from "./components/NewsView";
-import CookieConsent from "./components/CookieConsent";
+// Lazy imports for performance optimization
+const ChatInterface = lazy(() => import("./components/ChatInterface"));
+const Dashboard = lazy(() => import("./components/Dashboard"));
+const AnalysisView = lazy(() => import("./components/AnalysisView"));
+const ExerciseView = lazy(() => import("./components/ExerciseView"));
+const ImageGenView = lazy(() => import("./components/ImageGenView"));
+const CalculatorView = lazy(() => import("./components/CalculatorView"));
+const ReportBug = lazy(() => import("./components/ReportBug"));
+const LandingPage = lazy(() => import("./components/LandingPage"));
+const Auth = lazy(() => import("./components/Auth"));
+const Settings = lazy(() => import("./components/Settings"));
+const HistoryView = lazy(() => import("./components/HistoryView"));
+const SubscriptionView = lazy(() => import("./components/SubscriptionView"));
+const LeaderboardView = lazy(() => import("./components/LeaderboardView"));
+const ResetPassword = lazy(() => import("./components/ResetPassword"));
+const ScheduleView = lazy(() => import("./components/ScheduleView"));
+const NewsView = lazy(() => import("./components/NewsView"));
+const ShopView = lazy(() => import("./components/shop/ShopView"));
+const CookieConsent = lazy(() => import("./components/CookieConsent"));
+const CustomCursor = lazy(() => import("./components/CustomCursor"));
+const ShortcutsView = lazy(() => import("./components/ShortcutsView"));
+
 import { BlogPage, AboutPage, ContactPage } from "./components/StaticPages";
-import CustomCursor from "./components/CustomCursor";
 import {
   PrivacyPolicy,
   TermsOfService,
@@ -28,7 +39,98 @@ import {
   SecurityPolicy,
 } from "./components/LegalPages";
 import { PageTransition } from "./components/PageTransition";
-import { ShortcutsView } from "./components/ShortcutsView";
+
+const LoadingFallback = () => (
+  <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#050505] z-[9999] overflow-hidden">
+    {/* Background Decorative Blurs */}
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <motion.div
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.1, 0.2, 0.1],
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-orange-500/10 blur-[120px] rounded-full"
+      />
+      <motion.div
+        animate={{
+          scale: [1, 1.3, 1],
+          opacity: [0.1, 0.15, 0.1],
+        }}
+        transition={{
+          duration: 5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 1,
+        }}
+        className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 blur-[120px] rounded-full"
+      />
+    </div>
+
+    {/* Loader Core */}
+    <div className="relative">
+      {/* Outer spinning ring */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+        className="w-32 h-32 rounded-full border-t-2 border-b-2 border-transparent border-t-orange-500/50 border-b-orange-500/20"
+      />
+
+      {/* Middle spinning ring (reversed) */}
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        className="absolute inset-0 m-auto w-24 h-24 rounded-full border-r-2 border-l-2 border-transparent border-r-white/20 border-l-white/10"
+      />
+
+      {/* Inner Pulse */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <motion.div
+          animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center border border-orange-500/30 backdrop-blur-md shadow-[0_0_30px_rgba(249,115,22,0.3)]"
+        >
+          <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+        </motion.div>
+      </div>
+    </div>
+
+    {/* Text Loader */}
+    <div className="mt-16 text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="space-y-4"
+      >
+        <div className="flex flex-col items-center">
+          <h2 className="text-white font-black tracking-[0.6em] text-[10px] uppercase opacity-90">
+            X10Minds Intelligence
+          </h2>
+          <div className="mt-2 w-32 h-[1px] bg-gradient-to-r from-transparent via-orange-500/50 to-transparent" />
+        </div>
+
+        <div className="flex items-center gap-1.5 justify-center">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              animate={{
+                scale: [1, 1.5, 1],
+                backgroundColor: ["#f97316", "#ffffff", "#f97316"],
+              }}
+              transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+              className="w-1 h-1 rounded-full"
+            />
+          ))}
+        </div>
+
+        <p className="text-white/30 font-bold uppercase tracking-[0.3em] text-[7px] animate-pulse">
+          Building The Experience...
+        </p>
+      </motion.div>
+    </div>
+  </div>
+);
 
 const GlobalStyles = () => (
   <style
@@ -122,11 +224,14 @@ const App: React.FC = () => {
     language: "English",
     fontSize: "medium",
     shortcuts: {
-      history: "ctrl+h",
-      chat: "ctrl+k",
-      settings: "ctrl+,",
-      help: "ctrl+/",
-      theme: "ctrl+t",
+      history: "alt+h",
+      chat: "alt+c",
+      settings: "alt+,",
+      help: "alt+/",
+      theme: "alt+t",
+      dashboard: "alt+d",
+      calculator: "alt+k",
+      shop: "alt+s",
     },
   });
 
@@ -137,77 +242,29 @@ const App: React.FC = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // --- Keyboard Shortcuts ---
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input (except Escape)
-      if (
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
-      ) {
-        if (e.key !== "Escape") return;
-      }
+  // Unsaved Settings & Preview State
+  const [isSettingsDirty, setIsSettingsDirty] = useState(false);
+  const [previewAccent, setPreviewAccent] = useState<string | null>(null);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingMode, setPendingMode] = useState<AppMode | null>(null);
 
-      // Default shortcuts if missing
-      const s = settings.shortcuts || {
-        history: "ctrl+h",
-        chat: "ctrl+k",
-        settings: "ctrl+,",
-        help: "ctrl+/",
-        theme: "ctrl+t",
-      };
+  const handleModeChange = (newMode: AppMode) => {
+    if (newMode === mode) return;
 
-      const isMatch = (shortcut: string) => {
-        if (!shortcut) return false;
-        const parts = shortcut.toLowerCase().split("+");
-        const targetKey = parts[parts.length - 1];
-        const mods = parts.slice(0, -1);
+    // Check for unsaved settings if leaving Settings page
+    if (mode === AppMode.SETTINGS && isSettingsDirty) {
+      setShowUnsavedModal(true);
+      setPendingMode(newMode);
+      return;
+    }
 
-        if (e.key.toLowerCase() !== targetKey) return false;
+    // Also reset preview if leaving settings even if not dirty (just in case)
+    if (mode === AppMode.SETTINGS) {
+      setPreviewAccent(null);
+    }
 
-        const reqCtrl = mods.includes("ctrl") || mods.includes("cmd");
-        const reqShift = mods.includes("shift");
-        const reqAlt = mods.includes("alt");
-
-        const isCtrlPressed = e.ctrlKey || e.metaKey;
-
-        if (reqCtrl && !isCtrlPressed) return false;
-        if (!reqCtrl && isCtrlPressed && !shortcut.includes("escape"))
-          return false; // Strict check? Maybe too strict.
-        // Let's be lenient on extra modifiers unless specified? No, strict is better for conflicts.
-        // Actually, if I just check if required mods are present.
-        if (reqCtrl !== isCtrlPressed) return false;
-
-        if (reqShift !== e.shiftKey) return false;
-        if (reqAlt !== e.altKey) return false;
-
-        return true;
-      };
-
-      if (isMatch(s.history)) {
-        e.preventDefault();
-        setMode(AppMode.HISTORY);
-      } else if (isMatch(s.chat)) {
-        e.preventDefault();
-        setMode(AppMode.CHAT);
-      } else if (isMatch(s.settings)) {
-        e.preventDefault();
-        setMode(AppMode.SETTINGS);
-      } else if (isMatch(s.help)) {
-        e.preventDefault();
-        setMode(AppMode.SHORTCUTS);
-      } else if (isMatch(s.theme)) {
-        e.preventDefault();
-        setSettings((prev) => ({
-          ...prev,
-          theme: prev.theme === "dark" ? "light" : "dark",
-        }));
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [settings]);
+    setMode(newMode);
+  };
 
   // --- Rank Logic ---
   const calculateRank = (scores: ScoreData[]): string => {
@@ -428,6 +485,15 @@ const App: React.FC = () => {
         if (parsed.fontSize === "small") root.style.fontSize = "14px";
         else if (parsed.fontSize === "large") root.style.fontSize = "18px";
         else root.style.fontSize = "16px";
+
+        // Apply theme to document root
+        if (parsed.theme === "dark") {
+          root.classList.add("dark");
+          root.style.colorScheme = "dark";
+        } else {
+          root.classList.remove("dark");
+          root.style.colorScheme = "light";
+        }
       }
     } catch (e) {
       console.error("Failed to parse settings", e);
@@ -489,16 +555,11 @@ const App: React.FC = () => {
             }
 
             const validatedProfile = { ...profile, isLoggedIn: true };
-            refillAndSetUser(validatedProfile);
-            setViewState("APP");
-            notify(`Welcome back, ${validatedProfile.fullName}!`, "success");
-
-            // Remove the 'mode' query param if it was set to something that might confuse the user,
-            // or keep it if they were redirected to a specific page.
-            // For now, let's leave it as the state logic handles it.
+            await handleLogin(validatedProfile);
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error("Redirect check failed", e);
+          notify(e.message || "Login recovery failed", "error");
         }
       }
     };
@@ -575,30 +636,82 @@ const App: React.FC = () => {
   }, [user]);
 
   // Update settings storage
-  // Keyboard Shortcuts
+  // --- Keyboard Shortcuts (Consolidated) ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Use altKey as the primary modifier
-      if (e.altKey) {
-        if (e.key.toLowerCase() === "o") {
-          e.preventDefault();
-          setMode(AppMode.CHAT);
-          notify("Shortcut: New Chat", "info");
-        } else if (e.key.toLowerCase() === "h") {
-          e.preventDefault();
-          setMode(AppMode.HISTORY);
-          notify("Shortcut: Session History", "info");
-        } else if (e.key.toLowerCase() === "s") {
-          e.preventDefault();
-          setMode(AppMode.SHOP);
-          notify("Shortcut: Shop", "info");
-        }
+      // Ignore if user is typing in an input (except Escape)
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        if (e.key !== "Escape") return;
+      }
+
+      const s = settings.shortcuts || {
+        history: "alt+h",
+        chat: "alt+c",
+        settings: "alt+,",
+        help: "alt+/",
+        theme: "alt+t",
+        dashboard: "alt+d",
+        calculator: "alt+k",
+        shop: "alt+s",
+      };
+
+      const checkShortcut = (shortcut: string) => {
+        if (!shortcut) return false;
+        const parts = shortcut.toLowerCase().split("+");
+        const key = parts.pop();
+        const ctrl = parts.includes("ctrl") || parts.includes("cmd");
+        const alt = parts.includes("alt");
+        const shift = parts.includes("shift");
+
+        return (
+          e.key.toLowerCase() === key &&
+          (e.ctrlKey || e.metaKey) === ctrl &&
+          e.altKey === alt &&
+          e.shiftKey === shift
+        );
+      };
+
+      if (checkShortcut(s.chat)) {
+        e.preventDefault();
+        handleModeChange(AppMode.CHAT);
+        notify("Shortcut: AI Chat", "info");
+      } else if (checkShortcut(s.history)) {
+        e.preventDefault();
+        handleModeChange(AppMode.HISTORY);
+        notify("Shortcut: Session History", "info");
+      } else if (checkShortcut(s.shop)) {
+        e.preventDefault();
+        handleModeChange(AppMode.SHOP);
+        notify("Shortcut: Shop", "info");
+      } else if (checkShortcut(s.dashboard)) {
+        e.preventDefault();
+        handleModeChange(AppMode.DASHBOARD);
+        notify("Shortcut: Dashboard", "info");
+      } else if (checkShortcut(s.calculator)) {
+        e.preventDefault();
+        handleModeChange(AppMode.CALCULATOR);
+        notify("Shortcut: Calculators", "info");
+      } else if (checkShortcut(s.settings)) {
+        e.preventDefault();
+        handleModeChange(AppMode.SETTINGS);
+        notify("Shortcut: Settings", "info");
+      } else if (checkShortcut(s.help)) {
+        e.preventDefault();
+        handleModeChange(AppMode.SHORTCUTS);
+        notify("Shortcut: Keyboard Help", "info");
+      } else if (checkShortcut(s.theme)) {
+        e.preventDefault();
+        const nextTheme = settings.theme === "dark" ? "light" : "dark";
+        handleUpdateSettings({ ...settings, theme: nextTheme });
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [user]);
+  }, [settings, user, isSettingsDirty, mode]);
 
   const handleUpdateSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
@@ -610,7 +723,18 @@ const App: React.FC = () => {
     else if (newSettings.fontSize === "large") root.style.fontSize = "18px";
     else root.style.fontSize = "16px";
 
+    // Synchronize document theme class
+    if (newSettings.theme === "dark") {
+      root.classList.add("dark");
+      root.style.colorScheme = "dark";
+    } else {
+      root.classList.remove("dark");
+      root.style.colorScheme = "light";
+    }
+
     notify("Settings updated successfully");
+    setIsSettingsDirty(false);
+    setPreviewAccent(null);
   };
 
   // Load User Specific Data (History, Scores) when User changes
@@ -650,9 +774,40 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogin = (userData: UserProfile) => {
+  const handleLogin = async (userData: UserProfile) => {
     const tier = userData.subscriptionTier || "Free";
     const isUnlimited = tier === "Pro" || tier === "Ultra";
+
+    // 1. Device Tracking & Enforcement
+    let deviceId = localStorage.getItem("x10minds_device_id");
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem("x10minds_device_id", deviceId);
+    }
+
+    const updatedDevices = [...(userData.activeDevices || [])];
+    const existingDeviceIndex = updatedDevices.findIndex(
+      (d) => d.deviceId === deviceId,
+    );
+
+    if (existingDeviceIndex >= 0) {
+      updatedDevices[existingDeviceIndex].lastActive = Date.now();
+    } else {
+      if (updatedDevices.length >= 3) {
+        notify(
+          "Access Restricted: Maximum 3 devices reached. Please disconnect another device via settings.",
+          "error",
+        );
+        await logoutFirebase();
+        setViewState("LANDING");
+        return;
+      }
+      updatedDevices.push({
+        deviceId,
+        userAgent: navigator.userAgent,
+        lastActive: Date.now(),
+      });
+    }
 
     const enrichedUser: UserProfile = {
       ...userData,
@@ -661,12 +816,14 @@ const App: React.FC = () => {
       tokenLimit: isUnlimited ? Infinity : userData.tokenLimit || 10000,
       imagesGenerated: userData.imagesGenerated || 0,
       lastLimitRefill: userData.lastLimitRefill || Date.now(),
+      activeDevices: updatedDevices,
     };
 
     // Check for refill immediately on login
     const refilledUser = checkAndRefillLimits(enrichedUser);
     setUser(refilledUser);
     localStorage.setItem("x10minds_user", JSON.stringify(refilledUser));
+    await syncUserToFirebase(refilledUser);
     setMode(AppMode.DASHBOARD);
     setViewState("APP");
 
@@ -708,7 +865,7 @@ const App: React.FC = () => {
     ) {
       notify(
         "Active subscription found. Please cancel it before deleting your account.",
-        "error" as any,
+        "error",
       );
       setShowDeleteConfirm(false);
       return;
@@ -738,7 +895,7 @@ const App: React.FC = () => {
       console.error(e);
       notify(
         "Failed to delete account: " + (e.message || "Unknown error"),
-        "error" as any,
+        "error",
       );
     }
   };
@@ -923,6 +1080,22 @@ const App: React.FC = () => {
     setMode(AppMode.CHAT);
   };
 
+  const [allSessions, setAllSessions] = useState<ChatSession[]>([]);
+
+  useEffect(() => {
+    if (user?.email) {
+      const historyKey = `x10minds_history_${user.email}`;
+      const savedHistory = localStorage.getItem(historyKey);
+      if (savedHistory) {
+        try {
+          setAllSessions(JSON.parse(savedHistory));
+        } catch (e) {
+          console.error("Failed to load all sessions", e);
+        }
+      }
+    }
+  }, [user, messages, mode]); // Reload when relevant states change
+
   const handleAddScore = (newScore: ScoreData) => {
     const oldRank = calculateRank(scoreData);
     const newScoresList = [...scoreData, newScore];
@@ -1027,10 +1200,79 @@ const App: React.FC = () => {
                       ? "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20"
                       : settings.accentColor === "green"
                         ? "bg-green-600 hover:bg-green-700 shadow-green-600/20"
-                        : "bg-purple-600 hover:bg-purple-700 shadow-purple-600/20"
+                        : settings.accentColor === "purple"
+                          ? "bg-purple-600 hover:bg-purple-700 shadow-purple-600/20"
+                          : settings.accentColor === "red"
+                            ? "bg-red-600 hover:bg-red-700 shadow-red-600/20"
+                            : settings.accentColor === "pink"
+                              ? "bg-pink-600 hover:bg-pink-700 shadow-pink-600/20"
+                              : settings.accentColor === "teal"
+                                ? "bg-teal-600 hover:bg-teal-700 shadow-teal-600/20"
+                                : settings.accentColor === "cyan"
+                                  ? "bg-cyan-600 hover:bg-cyan-700 shadow-cyan-600/20"
+                                  : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20"
                 }`}
               >
                 {t("logout")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unsaved Changes Warning Modal */}
+      {showUnsavedModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div
+            className={`max-w-md w-full rounded-3xl p-8 shadow-2xl border border-yellow-500/30 animate-in zoom-in-95 duration-200 ${
+              settings.theme === "dark"
+                ? "bg-neutral-900"
+                : "bg-white border-gray-200"
+            }`}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 flex items-center justify-center mb-6 mx-auto">
+              <AlertTriangle className="w-8 h-8 text-yellow-500" />
+            </div>
+            <h3
+              className={`text-2xl font-bold mb-4 text-center ${
+                settings.theme === "dark" ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Unsaved Changes
+            </h3>
+            <p
+              className={`text-center ${
+                settings.theme === "dark" ? "text-neutral-400" : "text-gray-500"
+              } mb-8`}
+            >
+              You have unsaved changes in Settings. If you leave now, they will
+              be lost.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowUnsavedModal(false);
+                  setIsSettingsDirty(false);
+                  setPreviewAccent(null);
+                  if (pendingMode) setMode(pendingMode);
+                  setPendingMode(null);
+                }}
+                className="w-full py-4 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-yellow-900/20"
+              >
+                Discard & Leave
+              </button>
+              <button
+                onClick={() => {
+                  setShowUnsavedModal(false);
+                  setPendingMode(null);
+                }}
+                className={`w-full py-4 rounded-xl font-bold transition-all ${
+                  settings.theme === "dark"
+                    ? "bg-neutral-800 text-white hover:bg-neutral-700"
+                    : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                }`}
+              >
+                Stay & Save
               </button>
             </div>
           </div>
@@ -1086,414 +1328,390 @@ const App: React.FC = () => {
     </>
   );
 
+  // Simple Performance Monitor for elite optimization
+  useEffect(() => {
+    const perfData = window.performance.getEntriesByType(
+      "navigation",
+    )[0] as any;
+    if (perfData) {
+      console.log(
+        `[X10 OPTIMIZED] Load Time: ${perfData.loadEventEnd - perfData.startTime}ms`,
+      );
+      console.log(
+        `[X10 OPTIMIZED] DOM Ready: ${perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart}ms`,
+      );
+    }
+  }, []);
+
   // Main content renderer to ensure common wrappers are always present
   const renderContent = () => {
-    if (viewState === "LANDING") {
-      if (mode === AppMode.PRIVACY)
-        return <PrivacyPolicy onBack={() => setMode(AppMode.DASHBOARD)} />;
-      if (mode === AppMode.TERMS)
-        return <TermsOfService onBack={() => setMode(AppMode.DASHBOARD)} />;
-      if (mode === AppMode.COOKIES)
-        return <CookiePolicy onBack={() => setMode(AppMode.DASHBOARD)} />;
-      if (mode === AppMode.SECURITY)
-        return <SecurityPolicy onBack={() => setMode(AppMode.DASHBOARD)} />;
-      if (mode === AppMode.ABOUT)
-        return (
-          <AboutPage
-            themeMode={settings.theme}
-            accentColor={settings.accentColor}
-            onBack={() => setMode(AppMode.DASHBOARD)}
-          />
-        );
-      if (mode === AppMode.BLOG)
-        return (
-          <BlogPage
-            themeMode={settings.theme}
-            accentColor={settings.accentColor}
-            onBack={() => setMode(AppMode.DASHBOARD)}
-          />
-        );
-      if (mode === AppMode.CONTACT)
-        return (
-          <ContactPage
-            themeMode={settings.theme}
-            accentColor={settings.accentColor}
-            onBack={() => setMode(AppMode.DASHBOARD)}
-          />
-        );
-
-      return (
-        <>
-          <LandingPage
-            onGetStarted={handleGetStarted}
-            onLegalClick={(legalMode) => setMode(legalMode)}
-          />
-          <CookieConsent
-            onAcceptAll={() => console.log("All cookies accepted")}
-            onRejectAll={() => console.log("Non-essential cookies rejected")}
-            onSavePreferences={(prefs) =>
-              console.log("Cookie preferences saved:", prefs)
-            }
-          />
-        </>
-      );
-    }
-
-    if (viewState === "RESET_PASSWORD") {
-      return (
-        <ResetPassword
-          oobCode={resetToken}
-          onNavigateHome={() => setViewState("LANDING")}
-          notify={notify}
-        />
-      );
-    }
-
-    if (viewState === "AUTH") {
-      return (
-        <Auth
-          onLogin={handleLogin}
-          onBack={() => setViewState("LANDING")}
-          notify={notify}
-        />
-      );
-    }
-
-    if (viewState === "APP" && !user) {
-      return (
-        <div className="h-screen w-screen flex flex-col items-center justify-center bg-neutral-950 text-white gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 shadow-lg shadow-orange-900/50"></div>
-          <p className="text-neutral-500 font-medium animate-pulse tracking-wide text-sm">
-            LOADING X10MINDS...
-          </p>
-        </div>
-      );
-    }
-
     return (
-      <div
-        className={`min-h-screen flex flex-col font-sans selection-accent relative overflow-x-hidden ${rootClass}`}
-      >
-        {/* Persistent Premium Background Elements */}
-        {isDark && (
-          <>
-            <div className="fixed top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(234,88,12,0.03)_0%,transparent_50%)] pointer-events-none" />
-            <div className="fixed bottom-0 right-0 w-[800px] h-[800px] bg-blue-600/[0.02] blur-[150px] rounded-full pointer-events-none" />
-          </>
-        )}
-        {!isFocusMode && (
-          <Navigation
-            currentMode={mode}
-            setMode={setMode}
-            isMobileMenuOpen={isMobileMenuOpen}
-            setIsMobileMenuOpen={setIsMobileMenuOpen}
-            user={user}
-            onLogout={() => setShowLogoutConfirm(true)}
-            accentColor={settings.accentColor}
-            themeMode={settings.theme}
-            language={settings.language}
-          />
-        )}
-
-        <main
-          className={`flex-1 flex flex-col min-w-0 relative ${
-            isFocusMode ? "pt-0" : "pt-24 md:pt-28"
-          } ${isDark ? "bg-neutral-950" : "bg-gray-50"}`}
-        >
-          <PageTransition mode={mode} className="flex-1 flex flex-col relative">
-            {mode === AppMode.DASHBOARD && (
-              <Dashboard
-                user={user}
-                scoreData={scoreData}
-                rank={currentRank}
-                accentColor={settings.accentColor}
-                themeMode={settings.theme}
-                language={settings.language}
-                setMode={setMode}
-                sessionDistance={sessionDistance}
-              />
-            )}
-
-            {mode === AppMode.CHAT && (
-              <ChatInterface
-                messages={messages}
-                setMessages={setMessages}
-                saveHistory={saveHistory}
-                userProfile={user}
-                onTokenUsage={handleTokenUsage}
-                onResetChat={handleResetChat}
-                onGoToUpgrade={() => setMode(AppMode.SUBSCRIPTION)}
-                accentColor={settings.accentColor}
-                themeMode={settings.theme}
-                nickname={settings.nickname}
-                onImageGenerated={handleImageGenerated}
-                onNavigate={setMode}
-                onExercisePlanPreload={(plan) => {
-                  setPreloadedPlan(plan);
-                  setMode(AppMode.EXERCISE);
-                }}
-                onThemeChange={(t) =>
-                  handleUpdateSettings({ ...settings, theme: t })
-                }
-                onLogout={() => setShowLogoutConfirm(true)}
-                isFocusMode={isFocusMode}
-                onToggleFocusMode={() => setIsFocusMode(!isFocusMode)}
-                language={settings.language}
-                customInstructions={settings.aiInstructions}
-              />
-            )}
-
-            {mode === AppMode.CALCULATOR && (
-              <CalculatorView
-                onSaveScore={handleAddScore}
-                onSaveHistory={saveHistory}
-                onBack={() => setMode(AppMode.DASHBOARD)}
-                accentColor={settings.accentColor}
-                themeMode={settings.theme}
-                notify={notify}
-                sessionDistance={sessionDistance}
-                setSessionDistance={setSessionDistance}
-                podiums={user?.stats?.podiumFinishes || 0}
-                onAddPodium={handleAddPodium}
-              />
-            )}
-
-            {mode === AppMode.FORM_ANALYSIS && (
-              <AnalysisView
-                type="FORM"
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
-              />
-            )}
-
-            {mode === AppMode.TARGET_ANALYSIS &&
-              (user?.subscriptionTier !== "Free" ? (
-                <AnalysisView
-                  type="TARGET"
+      <Suspense fallback={<LoadingFallback />}>
+        {(() => {
+          if (viewState === "LANDING") {
+            if (mode === AppMode.PRIVACY)
+              return (
+                <PrivacyPolicy onBack={() => setMode(AppMode.DASHBOARD)} />
+              );
+            if (mode === AppMode.TERMS)
+              return (
+                <TermsOfService onBack={() => setMode(AppMode.DASHBOARD)} />
+              );
+            if (mode === AppMode.COOKIES)
+              return <CookiePolicy onBack={() => setMode(AppMode.DASHBOARD)} />;
+            if (mode === AppMode.SECURITY)
+              return (
+                <SecurityPolicy onBack={() => setMode(AppMode.DASHBOARD)} />
+              );
+            if (mode === AppMode.ABOUT)
+              return (
+                <AboutPage
                   themeMode={settings.theme}
                   accentColor={settings.accentColor}
+                  onBack={() => setMode(AppMode.DASHBOARD)}
                 />
-              ) : (
-                <div className="flex h-full items-center justify-center p-6 text-center">
-                  <div
-                    className={`max-w-md p-8 rounded-3xl border ${
-                      isDark
-                        ? "bg-neutral-900 border-neutral-800"
-                        : "bg-white border-gray-200 shadow-xl"
-                    }`}
-                  >
-                    <h2
-                      className={`text-2xl font-bold mb-4 ${
-                        isDark ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      Premium Feature Locked 🔒
-                    </h2>
-                    <p
-                      className={`mb-6 ${
-                        isDark ? "text-neutral-400" : "text-gray-600"
-                      }`}
-                    >
-                      {t("target_analysis_locked")}
-                    </p>
-                    <button
-                      onClick={() => setMode(AppMode.SUBSCRIPTION)}
-                      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20"
-                    >
-                      {t("upgrade_now")}
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-            {mode === AppMode.EXERCISE &&
-              (user?.subscriptionTier !== "Free" ? (
-                <ExerciseView
+              );
+            if (mode === AppMode.BLOG)
+              return (
+                <BlogPage
                   themeMode={settings.theme}
                   accentColor={settings.accentColor}
-                  onSaveToHistory={saveHistory}
-                  preloadedPlan={preloadedPlan}
+                  onBack={() => setMode(AppMode.DASHBOARD)}
                 />
-              ) : (
-                <div className="flex h-full items-center justify-center p-6 text-center">
-                  <div
-                    className={`max-w-md p-8 rounded-3xl border ${
-                      isDark
-                        ? "bg-neutral-900 border-neutral-800"
-                        : "bg-white border-gray-200 shadow-xl"
-                    }`}
-                  >
-                    <h2
-                      className={`text-2xl font-bold mb-4 ${
-                        isDark ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      Premium Feature Locked 🔒
-                    </h2>
-                    <p
-                      className={`mb-6 ${
-                        isDark ? "text-neutral-400" : "text-gray-600"
-                      }`}
-                    >
-                      {t("exercise_plan_locked")}
-                    </p>
-                    <button
-                      onClick={() => setMode(AppMode.SUBSCRIPTION)}
-                      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20"
-                    >
-                      {t("upgrade_now")}
-                    </button>
-                  </div>
-                </div>
-              ))}
+              );
+            if (mode === AppMode.CONTACT)
+              return (
+                <ContactPage
+                  themeMode={settings.theme}
+                  accentColor={settings.accentColor}
+                  onBack={() => setMode(AppMode.DASHBOARD)}
+                />
+              );
 
-            {mode === AppMode.IMAGE_GEN && (
-              <ImageGenView
-                user={user}
-                onUpgrade={() => setMode(AppMode.SUBSCRIPTION)}
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
-                onImageGenerated={handleImageGenerated}
-              />
-            )}
+            return (
+              <>
+                <LandingPage
+                  onGetStarted={handleGetStarted}
+                  onLegalClick={(legalMode) => setMode(legalMode)}
+                />
+                <CookieConsent
+                  onAcceptAll={() => console.log("All cookies accepted")}
+                  onRejectAll={() =>
+                    console.log("Non-essential cookies rejected")
+                  }
+                  onSavePreferences={(prefs) =>
+                    console.log("Cookie preferences saved:", prefs)
+                  }
+                />
+              </>
+            );
+          }
 
-            {mode === AppMode.SUBSCRIPTION && (
-              <SubscriptionView
-                currentTier={user?.subscriptionTier || "Free"}
-                onUpgrade={handleSubscriptionUpgrade}
-                tokenLimit={user?.tokenLimit || 20000}
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
-                isGuest={!user?.email}
-              />
-            )}
-
-            {mode === AppMode.REPORT_BUG && (
-              <ReportBug
-                notify={notify}
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
-              />
-            )}
-
-            {mode === AppMode.HISTORY && (
-              <HistoryView
-                onLoadSession={loadSession}
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
+          if (viewState === "RESET_PASSWORD") {
+            return (
+              <ResetPassword
+                oobCode={resetToken}
+                onNavigateHome={() => setViewState("LANDING")}
                 notify={notify}
               />
-            )}
+            );
+          }
 
-            {mode === AppMode.SETTINGS && (
-              <Settings
-                currentSettings={settings}
-                currentUser={user}
-                onUpdateSettings={handleUpdateSettings}
-                onUpdateUser={(u) => {
-                  setUser(u);
-                  syncUserToFirebase(u);
-                }}
-                onSave={() => setMode(AppMode.DASHBOARD)}
-                onDeleteAccount={() => setShowDeleteConfirm(true)}
+          if (viewState === "AUTH") {
+            return (
+              <Auth
+                onLogin={handleLogin}
+                onBack={() => setViewState("LANDING")}
                 notify={notify}
-                onNavigate={setMode}
               />
-            )}
+            );
+          }
 
-            {mode === AppMode.SHORTCUTS && (
-              <ShortcutsView
-                onBackendNavigate={setMode}
-                isDark={settings.theme === "dark"}
-                language={settings.language}
-                shortcuts={settings.shortcuts}
-                onUpdateShortcuts={(s) =>
-                  setSettings((prev) => ({ ...prev, shortcuts: s }))
-                }
-              />
-            )}
+          if (viewState === "APP" && !user) {
+            return <LoadingFallback />;
+          }
 
-            {mode === AppMode.LEADERBOARD && (
-              <LeaderboardView
-                currentUser={user}
-                currentUserScoreData={scoreData}
-                publicProfile={settings.publicProfile}
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
-              />
-            )}
+          return (
+            <div
+              className={`min-h-screen flex flex-col font-sans selection-accent relative overflow-x-hidden ${rootClass}`}
+            >
+              {/* Persistent Premium Background Elements */}
+              {isDark && (
+                <>
+                  <div className="fixed top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(234,88,12,0.03)_0%,transparent_50%)] pointer-events-none" />
+                  <div className="fixed bottom-0 right-0 w-[800px] h-[800px] bg-blue-600/[0.02] blur-[150px] rounded-full pointer-events-none" />
+                </>
+              )}
+              {!isFocusMode && mode !== AppMode.SHOP && (
+                <Navigation
+                  currentMode={mode}
+                  setMode={handleModeChange}
+                  isMobileMenuOpen={isMobileMenuOpen}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  user={user}
+                  onLogout={() => setShowLogoutConfirm(true)}
+                  accentColor={previewAccent || settings.accentColor}
+                  themeMode={settings.theme}
+                  language={settings.language}
+                />
+              )}
 
-            {mode === AppMode.SCHEDULE && (
-              <ScheduleView onBack={() => setMode(AppMode.DASHBOARD)} />
-            )}
-
-            {mode === AppMode.NEWS && <NewsView />}
-
-            {mode === AppMode.BLOG && (
-              <BlogPage
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
-              />
-            )}
-            {mode === AppMode.ABOUT && (
-              <AboutPage
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
-              />
-            )}
-            {mode === AppMode.CONTACT && (
-              <ContactPage
-                themeMode={settings.theme}
-                accentColor={settings.accentColor}
-              />
-            )}
-
-            {mode === AppMode.SHOP && (
-              <div className="flex-1 flex items-center justify-center p-6 text-center">
-                <div
-                  className={`max-w-md p-10 rounded-[2.5rem] border ${
-                    isDark
-                      ? "bg-neutral-900 border-white/5 shadow-2xl"
-                      : "bg-white border-gray-100 shadow-xl"
-                  }`}
+              <main
+                className={`flex-1 flex flex-col min-w-0 relative ${
+                  isFocusMode || mode === AppMode.SHOP
+                    ? "pt-0"
+                    : "pt-24 md:pt-28"
+                } ${isDark ? "bg-neutral-950" : "bg-gray-50"}`}
+              >
+                <PageTransition
+                  mode={mode}
+                  className="flex-1 flex flex-col relative"
                 >
-                  <div className="w-20 h-20 rounded-3xl bg-yellow-400/10 flex items-center justify-center mx-auto mb-8 animate-pulse">
-                    <ShoppingBag className="w-10 h-10 text-yellow-400" />
-                  </div>
-                  <h2
-                    className={`text-3xl font-black mb-4 tracking-tight ${
-                      isDark ? "text-white" : "text-gray-900"
-                    }`}
-                  >
-                    SHOP UNDER CONSTRUCTION 🛠️
-                  </h2>
-                  <p
-                    className={`mb-8 leading-relaxed ${
-                      isDark ? "text-neutral-400" : "text-gray-600"
-                    }`}
-                  >
-                    We are currently fine-tuning our inventory of premium
-                    archery gear. The X10Minds equipment store will be launching
-                    soon with exclusive deals for our members!
-                  </p>
-                  <button
-                    onClick={() => setMode(AppMode.DASHBOARD)}
-                    className="px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-black rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-yellow-400/20"
-                  >
-                    Return to Dashboard
-                  </button>
-                </div>
-              </div>
-            )}
-          </PageTransition>
-        </main>
-      </div>
+                  {mode === AppMode.DASHBOARD && (
+                    <Dashboard
+                      user={user}
+                      scoreData={scoreData}
+                      rank={currentRank}
+                      accentColor={previewAccent || settings.accentColor}
+                      themeMode={settings.theme}
+                      language={settings.language}
+                      setMode={handleModeChange}
+                      sessionDistance={sessionDistance}
+                    />
+                  )}
+
+                  {mode === AppMode.CHAT && (
+                    <ChatInterface
+                      messages={messages}
+                      setMessages={setMessages}
+                      saveHistory={saveHistory}
+                      userProfile={user}
+                      scoreData={scoreData}
+                      allSessions={allSessions}
+                      onSaveScore={handleAddScore}
+                      onTokenUsage={handleTokenUsage}
+                      onResetChat={handleResetChat}
+                      onGoToUpgrade={() =>
+                        handleModeChange(AppMode.SUBSCRIPTION)
+                      }
+                      accentColor={previewAccent || settings.accentColor}
+                      themeMode={settings.theme}
+                      nickname={settings.nickname}
+                      onImageGenerated={handleImageGenerated}
+                      onNavigate={handleModeChange}
+                      onExercisePlanPreload={(plan) => {
+                        setPreloadedPlan(plan);
+                        handleModeChange(AppMode.EXERCISE);
+                      }}
+                      onThemeChange={(t) =>
+                        handleUpdateSettings({ ...settings, theme: t })
+                      }
+                      onLogout={() => setShowLogoutConfirm(true)}
+                      isFocusMode={isFocusMode}
+                      onToggleFocusMode={() => setIsFocusMode(!isFocusMode)}
+                      language={settings.language}
+                      customInstructions={settings.aiInstructions}
+                      aiPersonality={settings.aiPersonality}
+                    />
+                  )}
+
+                  {mode === AppMode.CALCULATOR && (
+                    <CalculatorView
+                      onSaveScore={handleAddScore}
+                      onSaveHistory={saveHistory}
+                      onBack={() => setMode(AppMode.DASHBOARD)}
+                      accentColor={settings.accentColor}
+                      themeMode={settings.theme}
+                      notify={notify}
+                      sessionDistance={sessionDistance}
+                      setSessionDistance={setSessionDistance}
+                      podiums={user?.stats?.podiumFinishes || 0}
+                      onAddPodium={handleAddPodium}
+                    />
+                  )}
+
+                  {mode === AppMode.FORM_ANALYSIS && (
+                    <AnalysisView
+                      type="FORM"
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                    />
+                  )}
+
+                  {mode === AppMode.EXERCISE &&
+                    (user?.subscriptionTier !== "Free" ? (
+                      <ExerciseView
+                        themeMode={settings.theme}
+                        accentColor={settings.accentColor}
+                        onSaveToHistory={saveHistory}
+                        preloadedPlan={preloadedPlan}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center p-6 text-center">
+                        <div
+                          className={`max-w-md p-8 rounded-3xl border ${
+                            isDark
+                              ? "bg-neutral-900 border-neutral-800"
+                              : "bg-white border-gray-200 shadow-xl"
+                          }`}
+                        >
+                          <h2
+                            className={`text-2xl font-bold mb-4 ${
+                              isDark ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            Premium Feature Locked 🔒
+                          </h2>
+                          <p
+                            className={`mb-6 ${
+                              isDark ? "text-neutral-400" : "text-gray-600"
+                            }`}
+                          >
+                            {t("exercise_plan_locked")}
+                          </p>
+                          <button
+                            onClick={() => setMode(AppMode.SUBSCRIPTION)}
+                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20"
+                          >
+                            {t("upgrade_now")}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                  {mode === AppMode.IMAGE_GEN && (
+                    <ImageGenView
+                      user={user}
+                      onUpgrade={() => setMode(AppMode.SUBSCRIPTION)}
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                      onImageGenerated={handleImageGenerated}
+                    />
+                  )}
+
+                  {mode === AppMode.SUBSCRIPTION && (
+                    <SubscriptionView
+                      currentTier={user?.subscriptionTier || "Free"}
+                      onUpgrade={handleSubscriptionUpgrade}
+                      tokenLimit={user?.tokenLimit || 20000}
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                      isGuest={!user?.email}
+                    />
+                  )}
+
+                  {mode === AppMode.REPORT_BUG && (
+                    <ReportBug
+                      notify={notify}
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                    />
+                  )}
+
+                  {mode === AppMode.HISTORY && (
+                    <HistoryView
+                      onLoadSession={loadSession}
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                      notify={notify}
+                    />
+                  )}
+
+                  {mode === AppMode.SETTINGS && (
+                    <Settings
+                      currentSettings={settings}
+                      currentUser={user}
+                      onUpdateSettings={handleUpdateSettings}
+                      onUpdateUser={(u) => {
+                        setUser(u);
+                        syncUserToFirebase(u);
+                      }}
+                      onSave={() => setMode(AppMode.DASHBOARD)}
+                      onDeleteAccount={() => setShowDeleteConfirm(true)}
+                      notify={notify}
+                      onNavigate={handleModeChange}
+                      onDirtyChange={setIsSettingsDirty}
+                      onPreviewTheme={setPreviewAccent}
+                    />
+                  )}
+
+                  {mode === AppMode.SHORTCUTS && (
+                    <ShortcutsView
+                      onBackendNavigate={setMode}
+                      isDark={settings.theme === "dark"}
+                      language={settings.language}
+                      shortcuts={settings.shortcuts}
+                      onUpdateShortcuts={(s: any) =>
+                        handleUpdateSettings({ ...settings, shortcuts: s })
+                      }
+                    />
+                  )}
+
+                  {mode === AppMode.LEADERBOARD && (
+                    <LeaderboardView
+                      currentUser={user}
+                      currentUserScoreData={scoreData}
+                      publicProfile={settings.publicProfile}
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                    />
+                  )}
+
+                  {mode === AppMode.SCHEDULE && (
+                    <ScheduleView
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                      onBack={() => setMode(AppMode.DASHBOARD)}
+                    />
+                  )}
+
+                  {mode === AppMode.NEWS && (
+                    <NewsView
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                    />
+                  )}
+
+                  {mode === AppMode.BLOG && (
+                    <BlogPage
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                    />
+                  )}
+                  {mode === AppMode.ABOUT && (
+                    <AboutPage
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                    />
+                  )}
+                  {mode === AppMode.CONTACT && (
+                    <ContactPage
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                    />
+                  )}
+
+                  {mode === AppMode.SHOP && (
+                    <ShopView
+                      user={user}
+                      onExit={() => setMode(AppMode.DASHBOARD)}
+                      onOpenSettings={() => setMode(AppMode.SETTINGS)}
+                      themeMode={settings.theme}
+                      accentColor={settings.accentColor}
+                    />
+                  )}
+                </PageTransition>
+              </main>
+            </div>
+          );
+        })()}
+      </Suspense>
     );
   };
 
   return (
     <>
-      <CustomCursor />
+      <CustomCursor themeMode={settings.theme} />
       <GlobalStyles />
       {renderOverlays()}
       {renderContent()}

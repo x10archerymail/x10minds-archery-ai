@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import * as React from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Send,
   Image as ImageIcon,
@@ -33,10 +34,21 @@ import {
   Dumbbell,
   FileText,
   History,
+  ArrowRight,
+  CheckCircle,
+  ShoppingBag,
+  CreditCard as CreditCardIcon,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Message, UserProfile, AppMode, Exercise } from "../types";
+import {
+  Message,
+  UserProfile,
+  AppMode,
+  Exercise,
+  ScoreData,
+  ChatSession,
+} from "../types";
 import {
   streamGeminiResponse,
   enhancePrompt,
@@ -45,12 +57,16 @@ import {
 } from "../services/geminiService";
 import { ArcheryLoader } from "./ArcheryLoader";
 import { getTranslation } from "../i18n";
+import { ChartRenderer } from "./ChartRenderer";
 
 interface ChatInterfaceProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   saveHistory: (messages: Message[]) => void;
   userProfile: UserProfile | null;
+  scoreData?: ScoreData[];
+  allSessions?: ChatSession[];
+  onSaveScore?: (score: ScoreData) => void;
   onTokenUsage: (amount: number) => void;
   onResetChat: (isPenalty: boolean) => void;
   onGoToUpgrade: () => void;
@@ -65,8 +81,107 @@ interface ChatInterfaceProps {
   isFocusMode?: boolean;
   onToggleFocusMode?: () => void;
   language?: string;
+
   customInstructions?: string;
+  aiPersonality?: string;
 }
+
+const CameraModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onCapture: (imageData: string) => void;
+  isDark: boolean;
+  activeTextClass: string;
+  activeBgClass: string;
+  activeGradient: string;
+}> = ({
+  isOpen,
+  onClose,
+  onCapture,
+  isDark,
+  activeTextClass,
+  activeBgClass,
+  activeGradient,
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => stopCamera();
+  }, [isOpen]);
+
+  const startCamera = async () => {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      setStream(s);
+      if (videoRef.current) videoRef.current.srcObject = s;
+    } catch (e) {
+      console.error("Camera access failed", e);
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+  };
+
+  const takePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        onCapture(canvas.toDataURL("image/jpeg", 0.8));
+      }
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-2xl bg-neutral-950 rounded-[2rem] overflow-hidden border border-white/10 relative shadow-2xl">
+        <div className="relative aspect-square md:aspect-video bg-black flex items-center justify-center">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-4 right-4 flex gap-2">
+            <button
+              onClick={onClose}
+              className="p-3 bg-white/10 text-white rounded-full hover:bg-white/20"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
+            <button onClick={takePhoto} className="group relative">
+              <div className="w-16 h-16 rounded-full border-4 border-white/30 flex items-center justify-center">
+                <div className="w-12 h-12 bg-white rounded-full transition-transform active:scale-90"></div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+      <canvas ref={canvasRef} className="hidden" />
+    </div>
+  );
+};
 
 const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
   ({
@@ -74,6 +189,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
     setMessages,
     saveHistory,
     userProfile,
+    scoreData,
+    allSessions,
+    onSaveScore,
     onTokenUsage,
     onResetChat,
     onGoToUpgrade,
@@ -90,6 +208,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
 
     language = "English",
     customInstructions,
+    aiPersonality,
   }) => {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +217,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [isIncognito, setIsIncognito] = useState(false);
     const [isListening, setIsListening] = useState(false);
+    const [pendingOrder, setPendingOrder] = useState<any>(null);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
 
     const t = (key: string) => {
       return getTranslation(language, key);
@@ -106,39 +227,51 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
       show: boolean;
       message: string;
     }>({ show: false, message: "" });
-    const [selectedModel, setSelectedModel] = useState("Gemini 3 Flash");
+    const [selectedModel, setSelectedModel] = useState("Gemini 3.0 Flash");
     const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
 
     const models = [
       {
+        id: "gemini-3.0-flash",
+        name: "Gemini 3.0 Flash",
+        provider: "Google",
+        color: "text-[#FFD700]", // Google brand color or gold
+        desc: "Ultra-fast multimodal reasoning",
+      },
+      {
+        id: "gemini-2.5-flash",
+        name: "Gemini 2.5 Flash",
+        provider: "Google",
+        color: "text-amber-400",
+        desc: "Balanced speed and accuracy",
+      },
+      {
         id: "gpt-5.1",
-        name: "GPT 5.1",
+        name: "GPT-5.1",
         provider: "OpenAI",
         color: "text-emerald-400",
+        desc: "Advanced logic & reasoning",
       },
       {
         id: "gpt-5.2",
-        name: "GPT 5.2 (Elite)",
+        name: "GPT-5.2",
         provider: "OpenAI",
-        color: "text-emerald-500",
+        color: "text-teal-400",
+        desc: "Next-gen cognitive architecture",
       },
       {
-        id: "claude-4.5",
-        name: "Claude Opus 4.5",
+        id: "claude-4.5-sonnet",
+        name: "Claude 4.5 Sonnet",
         provider: "Anthropic",
         color: "text-orange-400",
+        desc: "Creative expert analysis",
       },
       {
-        id: "gemini-2.5",
-        name: "Gemini 2.5 Flash",
-        provider: "Google",
-        color: "text-blue-400",
-      },
-      {
-        id: "gemini-3",
-        name: "Gemini 3 Flash",
-        provider: "Google",
-        color: "text-purple-400",
+        id: "claude-4.5-opus",
+        name: "Claude 4.5 Opus",
+        provider: "Anthropic",
+        color: "text-rose-400",
+        desc: "Deepest reasoning capability",
       },
     ];
 
@@ -147,19 +280,68 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
 
     // Maps for dynamic color classes
     const colors: Record<string, string> = {
-      orange: "text-orange-500",
+      orange: "text-[#FFD700]",
       blue: "text-blue-500",
       green: "text-green-500",
       purple: "text-purple-500",
+      red: "text-red-500",
+      pink: "text-pink-500",
+      teal: "text-teal-500",
+      cyan: "text-cyan-500",
+      indigo: "text-indigo-500",
     };
     const bgGradients: Record<string, string> = {
-      orange: "from-orange-600 to-red-600",
+      orange: "from-[#FFD700] via-[#FDB931] to-[#FFD700]",
       blue: "from-blue-600 to-cyan-600",
       green: "from-green-600 to-emerald-600",
       purple: "from-purple-600 to-pink-600",
+      red: "from-red-600 to-rose-600",
+      pink: "from-pink-600 to-rose-600",
+      teal: "from-teal-600 to-cyan-600",
+      cyan: "from-cyan-600 to-blue-600",
+      indigo: "from-indigo-600 to-purple-600",
     };
     const activeTextClass = colors[accentColor] || colors.orange;
     const activeGradient = bgGradients[accentColor] || bgGradients.orange;
+
+    const bgColors: Record<string, string> = {
+      orange: "bg-[#FFD700]",
+      blue: "bg-blue-500",
+      green: "bg-green-500",
+      purple: "bg-purple-500",
+      red: "bg-red-500",
+      pink: "bg-pink-500",
+      teal: "bg-teal-500",
+      cyan: "bg-cyan-500",
+      indigo: "bg-indigo-500",
+    };
+    const activeBgClass = bgColors[accentColor] || bgColors.orange;
+
+    const borderColors: Record<string, string> = {
+      orange: "border-[#FFD700]",
+      blue: "border-blue-500",
+      green: "border-green-500",
+      purple: "border-purple-500",
+      red: "border-red-500",
+      pink: "border-pink-500",
+      teal: "border-teal-500",
+      cyan: "border-cyan-500",
+      indigo: "border-indigo-500",
+    };
+    const activeBorderClass = borderColors[accentColor] || borderColors.orange;
+
+    const shadowColors: Record<string, string> = {
+      orange: "shadow-[#FFD700]",
+      blue: "shadow-blue-500",
+      green: "shadow-green-500",
+      purple: "shadow-purple-500",
+      red: "shadow-red-500",
+      pink: "shadow-pink-500",
+      teal: "shadow-teal-500",
+      cyan: "shadow-cyan-500",
+      indigo: "shadow-indigo-500",
+    };
+    const activeShadowClass = shadowColors[accentColor] || shadowColors.orange;
 
     // Speech & Editing State
     const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(
@@ -697,9 +879,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
           nickname,
           userProfile?.subscriptionTier || "Free",
           true,
-
           selectedModel,
           customInstructions,
+          scoreData,
+          allSessions,
+          aiPersonality,
         );
 
         let fullResponse = "";
@@ -743,9 +927,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                       .replace(/\[SYSTEM_COMMAND:THEME_LIGHT\]/g, "")
                       .replace(/\[SYSTEM_COMMAND:THEME_DARK\]/g, "")
                       .replace(/\[SYSTEM_COMMAND:LOGOUT\]/g, "")
-                      .replace(/\[SYSTEM_COMMAND:NOTIFY:.*?\]/g, "")
-                      .replace(/\[SYSTEM_COMMAND:GENERATE_IMAGE:.*?\]/g, "")
-                      .replace(/\[SYSTEM_COMMAND:EXERCISE_DATA:.*?\]/g, ""), // Hide the commands from user
+                      .replace(/\[SYSTEM_COMMAND:NOTIFY:[\s\S]*?\]/g, "")
+                      .replace(
+                        /\[SYSTEM_COMMAND:GENERATE_IMAGE:[\s\S]*?\]/g,
+                        "",
+                      )
+                      .replace(/\[SYSTEM_COMMAND:EXERCISE_DATA:[\s\S]*?\]/g, "")
+                      .replace(/\[SYSTEM_COMMAND:RENDER_CHART:[\s\S]*?\]/g, "")
+                      .replace(/\[SYSTEM_COMMAND:SAVE_SCORE:[\s\S]*?\]/g, "")
+                      .replace(
+                        /\[SYSTEM_COMMAND:ORDER_PRODUCT:[\s\S]*?\]/g,
+                        "",
+                      ), // Hide the commands from user
                     sources: allSources.length > 0 ? allSources : undefined,
                     isSearching: false,
                     isTyping: false,
@@ -758,6 +951,48 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
 
         // Detect System Commands after response is complete
         if (!stopGeneration.current) {
+          // 0. Check for Chart Data
+          if (fullResponse.includes("[SYSTEM_COMMAND:RENDER_CHART:")) {
+            const chartMatch = fullResponse.match(
+              /\[SYSTEM_COMMAND:RENDER_CHART:!!(.*?)!!\]/s,
+            );
+            if (chartMatch && chartMatch[1]) {
+              try {
+                const chartJson = JSON.parse(chartMatch[1].trim());
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === botMessageId
+                      ? { ...msg, chart: chartJson }
+                      : msg,
+                  ),
+                );
+              } catch (e) {
+                console.error("Failed to parse chart data", e);
+              }
+            }
+          }
+
+          // 0.1 Check for Save Score
+          if (fullResponse.includes("[SYSTEM_COMMAND:SAVE_SCORE:")) {
+            const scoreMatch = fullResponse.match(
+              /\[SYSTEM_COMMAND:SAVE_SCORE:!!(.*?)!!\]/s,
+            );
+            if (scoreMatch && scoreMatch[1]) {
+              try {
+                const scoreJson = JSON.parse(scoreMatch[1].trim());
+                if (onSaveScore) {
+                  onSaveScore({
+                    ...scoreJson,
+                    date:
+                      scoreJson.date || new Date().toISOString().split("T")[0],
+                  });
+                }
+              } catch (e) {
+                console.error("Failed to parse score data", e);
+              }
+            }
+          }
+
           // 1. Check for Exercise Data
           if (fullResponse.includes("[SYSTEM_COMMAND:EXERCISE_DATA:")) {
             const exerciseMatch = fullResponse.match(
@@ -832,6 +1067,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
             );
             if (noteMatch && noteMatch[1]) {
               showNotification(noteMatch[1].trim());
+            }
+          }
+          // 7. Check for Product Ordering
+          if (fullResponse.includes("[SYSTEM_COMMAND:ORDER_PRODUCT:")) {
+            const orderMatch = fullResponse.match(
+              /\[SYSTEM_COMMAND:ORDER_PRODUCT:!!(.*?)!!\]/s,
+            );
+            if (orderMatch && orderMatch[1]) {
+              try {
+                const orderJson = JSON.parse(orderMatch[1].trim());
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === botMessageId
+                      ? { ...msg, orderData: orderJson }
+                      : msg,
+                  ),
+                );
+              } catch (e) {
+                console.error("Failed to parse order data", e);
+              }
             }
           }
         }
@@ -1026,7 +1281,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                   }`}
                 >
                   <img
-                    src="/images/X10Minds logo.png"
+                    src="/images/X10Minds%20logo.png"
                     alt="X10Minds Logo"
                     className="w-14 h-14 md:w-20 md:h-20 object-contain drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]"
                   />
@@ -1111,7 +1366,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
             </div>
           )}
 
-          {messages.map((msg, index) => {
+          {messages.map((msg: Message, index: number) => {
             const isUser = msg.role === "user";
             const isEditing = editingMessageId === msg.id;
 
@@ -1158,7 +1413,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     }`}
                   >
                     <img
-                      src="/images/X10Minds logo.png"
+                      src="/images/X10Minds%20logo.png"
                       alt="Coach X10"
                       className="w-5 h-5 md:w-7 md:h-7 object-contain drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]"
                     />
@@ -1318,6 +1573,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                           </ReactMarkdown>
                         </div>
 
+                        {msg.chart && (
+                          <div className="mt-4">
+                            <ChartRenderer
+                              chartData={msg.chart}
+                              themeMode={themeMode}
+                            />
+                          </div>
+                        )}
+
                         {sptPlanJson && (
                           <div className="mt-4">
                             <button
@@ -1334,8 +1598,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                               }}
                               className={`flex items-center gap-3 px-5 py-3 rounded-2xl transition-all w-full md:w-auto font-orbitron group relative overflow-hidden ${
                                 isDark
-                                  ? "bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-900/20"
-                                  : "bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-200"
+                                  ? `${activeBgClass} hover:brightness-110 ${accentColor === "orange" ? "text-black" : "text-white"} shadow-lg ${activeShadowClass}/20`
+                                  : "bg-black hover:bg-neutral-800 text-white shadow-lg shadow-black/20"
                               }`}
                             >
                               <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none"></div>
@@ -1350,6 +1614,37 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                               </div>
                               <Zap className="w-4 h-4 ml-auto text-white/50 group-hover:text-white group-hover:animate-pulse transition-colors" />
                             </button>
+                          </div>
+                        )}
+
+                        {msg.orderData && !msg.isTyping && (
+                          <div className="mt-6 animate-in zoom-in-95 duration-500">
+                            <OrderConfirmation
+                              order={msg.orderData}
+                              isDark={isDark}
+                              accentColor={accentColor}
+                              onNavigate={onNavigate}
+                              onSuccess={(orderId) => {
+                                // Update message to show success
+                                setMessages((prev) =>
+                                  prev.map((m) =>
+                                    m.id === msg.id
+                                      ? {
+                                          ...m,
+                                          orderData: {
+                                            ...m.orderData,
+                                            confirmed: true,
+                                            orderId,
+                                          },
+                                        }
+                                      : m,
+                                  ),
+                                );
+                                showNotification(
+                                  `Order #${orderId} confirmed! 🏹`,
+                                );
+                              }}
+                            />
                           </div>
                         )}
 
@@ -1372,7 +1667,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                               </span>
                             </div>
                             <div className="flex flex-wrap gap-2.5">
-                              {msg.sources.map((source, i) => (
+                              {msg.sources.map((source: any, i: number) => (
                                 <a
                                   key={i}
                                   href={source.url}
@@ -1396,7 +1691,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                               onClick={() => handleSpeak(msg.content, msg.id)}
                               className={`p-2.5 rounded-xl transition-all ${
                                 speakingMessageId === msg.id
-                                  ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                                  ? `${activeBgClass} ${accentColor === "orange" ? "text-black" : "text-white"} shadow-lg ${activeShadowClass}/20`
                                   : `hover:bg-white/5 ${
                                       isDark
                                         ? "text-neutral-500 hover:text-white"
@@ -1446,7 +1741,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                                 action: () => handleRegenerate(index),
                                 title: "RE-SIMULATE",
                               },
-                            ].map((tool, i) => (
+                            ].map((tool: any, i: number) => (
                               <button
                                 key={i}
                                 onClick={tool.action}
@@ -1481,7 +1776,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                         minute: "2-digit",
                       })}
                       {msg.thoughtTime && (
-                        <span className="ml-2 text-orange-500 opacity-60">
+                        <span className={`ml-2 ${activeTextClass} opacity-80`}>
                           • THOUGHT FOR {(msg.thoughtTime / 1000).toFixed(1)}s
                         </span>
                       )}
@@ -1491,17 +1786,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     <div className="flex items-center gap-2 mt-2 opacity-30 hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleEditStart(msg)}
-                        className="p-1 px-2 rounded-lg bg-white/5 border border-white/5 hover:border-orange-500/30 transition-all"
+                        className={`p-1 px-2 rounded-lg bg-white/5 border border-white/5 hover:${activeBorderClass}/30 transition-all`}
                       >
-                        <Pencil className="w-3 h-3 text-orange-500" />
+                        <Pencil className={`w-3 h-3 ${activeTextClass}`} />
                       </button>
                       <button
                         onClick={() => handleCopy(msg.content)}
-                        className="p-1 px-2 rounded-lg bg-white/5 border border-white/5 hover:border-orange-500/30 transition-all"
+                        className={`p-1 px-2 rounded-lg bg-white/5 border border-white/5 hover:${activeBorderClass}/30 transition-all`}
                       >
-                        <Copy className="w-3 h-3 text-orange-500" />
+                        <Copy className={`w-3 h-3 ${activeTextClass}`} />
                       </button>
-                      <span className="text-[9px] font-black font-orbitron text-orange-500/60 uppercase tracking-widest">
+                      <span
+                        className={`text-[9px] font-black font-orbitron ${activeTextClass}/60 uppercase tracking-widest`}
+                      >
                         USER INPUT RECEIVED
                       </span>
                     </div>
@@ -1562,13 +1859,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
               >
                 <div className="relative">
                   <img
-                    src={selectedImage}
                     alt="Visual Buffer"
-                    className="w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl object-cover shadow-lg border-2 border-orange-500/50"
+                    className={`w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl object-cover shadow-lg border-2 ${activeBorderClass}/50`}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 md:gap-2 flex-1 min-w-0">
-                  <span className="text-[9px] md:text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] md:tracking-[0.3em] font-orbitron">
+                  <span
+                    className={`text-[9px] md:text-[10px] font-black ${activeTextClass} uppercase tracking-[0.2em] md:tracking-[0.3em] font-orbitron`}
+                  >
                     IMAGE READY
                   </span>
                   <button
@@ -1609,7 +1907,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     }`}
                     title="Start New Session"
                   >
-                    <PlusCircle className="w-3 h-3 text-orange-500" />
+                    <PlusCircle className={`w-3 h-3 ${activeTextClass}`} />
                     <span className="hidden xs:inline">
                       {t("new_chat").toUpperCase()}
                     </span>
@@ -1662,7 +1960,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                     },
                     {
                       icon: Camera,
-                      action: () => cameraInputRef.current?.click(),
+                      action: () => setIsCameraOpen(true),
                       title: t("camera"),
                     },
                     {
@@ -1687,7 +1985,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                         ? t("exit_full_screen")
                         : t("full_screen"),
                       active: isFocusMode,
-                      activeColor: "text-orange-500 bg-orange-500/10",
+                      activeColor: `${activeTextClass} ${activeBgClass}/10`,
                     },
                   ].map((tool, i) => (
                     <button
@@ -1718,8 +2016,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
               <div
                 className={`flex items-center gap-0 backdrop-blur-xl rounded-2xl md:rounded-[2.5rem] border transition-all p-1 md:p-2 shadow-lg md:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] ${
                   isDark
-                    ? "bg-neutral-900/60 border-white/10 focus-within:border-orange-500/50"
-                    : "bg-white border-gray-200 focus-within:border-orange-500/30"
+                    ? `bg-neutral-900/60 border-white/10 focus-within:${activeBorderClass}/50`
+                    : `bg-white border-gray-200 focus-within:${activeBorderClass}/30`
                 }`}
               >
                 {/* Model selector - compact on mobile */}
@@ -1733,7 +2031,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                         <p className="text-[9px] md:text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
                           SELECT MODEL
                         </p>
-                        <Zap className="w-3 h-3 md:w-3.5 md:h-3.5 text-orange-500 animate-pulse" />
+                        <Zap
+                          className={`w-3 h-3 md:w-3.5 md:h-3.5 ${activeTextClass} animate-pulse`}
+                        />
                       </div>
                       <div className="space-y-1 md:space-y-2">
                         {models.map((m) => (
@@ -1761,7 +2061,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                               </span>
                             </div>
                             {selectedModel === m.name && (
-                              <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,1)]"></div>
+                              <div
+                                className={`w-2 h-2 rounded-full ${activeBgClass} ${activeShadowClass}`}
+                              ></div>
                             )}
                           </button>
                         ))}
@@ -1771,20 +2073,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                   <button
                     type="button"
                     onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
-                    className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-3 md:py-4 rounded-xl md:rounded-2xl transition-all pointer-events-auto ${
+                    className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-3 md:py-4 rounded-xl md:rounded-2xl transition-all pointer-events-auto border ${
                       isDark
-                        ? "bg-white/5 active:bg-white/10"
-                        : "bg-gray-50 active:bg-gray-100"
+                        ? "bg-white/5 border-white/5 active:bg-white/10"
+                        : "bg-gray-100 border-gray-200 active:bg-gray-200"
                     }`}
                   >
-                    <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] animate-pulse"></div>
-                    <span className="text-[9px] md:text-[10px] font-black font-orbitron text-white uppercase tracking-wider max-w-[50px] md:max-w-none truncate">
-                      {selectedModel.split(" ")[0]}
+                    <div
+                      className={`w-2 h-2 rounded-full ${activeBgClass} ${activeShadowClass}/80 animate-pulse`}
+                    ></div>
+                    <span
+                      className={`text-[9px] md:text-[10px] font-black font-orbitron uppercase tracking-wider max-w-[120px] md:max-w-none truncate ${
+                        isDark ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {selectedModel}
                     </span>
                     <ChevronDown
-                      className={`w-3 h-3 md:w-3.5 md:h-3.5 text-neutral-500 transition-transform duration-300 ${
+                      className={`w-3 h-3 md:w-3.5 md:h-3.5 transition-transform duration-300 ${
                         isModelSelectorOpen ? "rotate-180" : ""
-                      }`}
+                      } ${isDark ? "text-neutral-500" : "text-gray-400"}`}
                     />
                   </button>
                 </div>
@@ -1831,8 +2139,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                   className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-full flex items-center justify-center transition-all flex-shrink-0 mr-0.5 md:mr-1 active:scale-90 ${
                     !isLoading &&
                     (isLimitReached || (!input.trim() && !selectedImage))
-                      ? "bg-neutral-800 text-neutral-600 cursor-not-allowed opacity-30"
-                      : `bg-gradient-to-r ${activeGradient} text-white shadow-lg`
+                      ? isDark
+                        ? "bg-white/5 text-white/20 cursor-not-allowed"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : `bg-gradient-to-r ${activeGradient} text-white shadow-lg shadow-${accentColor}-500/20`
                   }`}
                 >
                   {isLoading ? (
@@ -1860,11 +2170,320 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
               capture="environment"
               className="hidden"
             />
+            <CameraModal
+              isOpen={isCameraOpen}
+              onClose={() => setIsCameraOpen(false)}
+              onCapture={(img) => {
+                setSelectedImage(img);
+                setIsCameraOpen(false);
+              }}
+              isDark={isDark}
+              activeTextClass={activeTextClass}
+              activeBgClass={activeBgClass}
+              activeGradient={activeGradient}
+            />
           </form>
         </div>
       </div>
     );
   },
 );
+
+// --- Sub-components ---
+
+const OrderConfirmation: React.FC<{
+  order: any;
+  isDark: boolean;
+  accentColor: string;
+  onNavigate?: (mode: AppMode) => void;
+  onSuccess: (orderId: string) => void;
+}> = ({ order, isDark, accentColor, onNavigate, onSuccess }) => {
+  const bgColors: Record<string, string> = {
+    orange: "bg-[#FFD700]",
+    blue: "bg-blue-500",
+    green: "bg-green-500",
+    purple: "bg-purple-500",
+    red: "bg-red-500",
+    pink: "bg-pink-500",
+    teal: "bg-teal-500",
+    cyan: "bg-cyan-500",
+    indigo: "bg-indigo-500",
+  };
+  const activeBgClass = bgColors[accentColor] || bgColors.orange;
+
+  const textColors: Record<string, string> = {
+    orange: "text-[#FFD700]",
+    blue: "text-blue-500",
+    green: "text-green-500",
+    purple: "text-purple-500",
+    red: "text-red-500",
+    pink: "text-pink-500",
+    teal: "text-teal-500",
+    cyan: "text-cyan-500",
+    indigo: "text-indigo-500",
+  };
+  const activeTextClass = textColors[accentColor] || textColors.orange;
+
+  const borderColors: Record<string, string> = {
+    orange: "border-[#FFD700]",
+    blue: "border-blue-500",
+    green: "border-green-500",
+    purple: "border-purple-500",
+    red: "border-red-500",
+    pink: "border-pink-500",
+    teal: "border-teal-500",
+    cyan: "border-cyan-500",
+    indigo: "border-indigo-500",
+  };
+  const activeBorderClass = borderColors[accentColor] || borderColors.orange;
+
+  const shadowColors: Record<string, string> = {
+    orange: "shadow-[#FFD700]",
+    blue: "shadow-blue-500",
+    green: "shadow-green-500",
+    purple: "shadow-purple-500",
+    red: "shadow-red-500",
+    pink: "shadow-pink-500",
+    teal: "shadow-teal-500",
+    cyan: "shadow-cyan-500",
+    indigo: "shadow-indigo-500",
+  };
+  const activeShadowClass = shadowColors[accentColor] || shadowColors.orange;
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [savedPayments, setSavedPayments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("x10minds_saved_payments");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setSavedPayments(parsed);
+      if (parsed.length > 0) setSelectedPayment(parsed[0]);
+    }
+  }, []);
+
+  const handleConfirm = () => {
+    if (!selectedPayment) return;
+    setIsConfirming(true);
+
+    setTimeout(() => {
+      const orderId = Math.floor(Math.random() * 90000) + 10000;
+      const newOrder = {
+        id: orderId.toString(),
+        productId: order.productId,
+        name: order.name,
+        total: (order.price * (order.quantity || 1)).toFixed(2),
+        status: "Processing",
+        date: new Date().toLocaleDateString(),
+        timestamp: Date.now(),
+        items: order.quantity || 1,
+        color: order.color,
+        size: order.size,
+      };
+
+      // Save to global orders
+      const existingOrders = JSON.parse(
+        localStorage.getItem("x10minds_shop_orders") || "[]",
+      );
+      localStorage.setItem(
+        "x10minds_shop_orders",
+        JSON.stringify([newOrder, ...existingOrders]),
+      );
+
+      setIsConfirming(false);
+      onSuccess(orderId.toString());
+    }, 2000);
+  };
+
+  if (order.confirmed) {
+    return (
+      <div
+        className={`p-6 rounded-3xl border border-green-500/30 bg-green-500/5 backdrop-blur-xl`}
+      >
+        <div className="flex items-center gap-3 text-green-500 mb-2">
+          <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">
+            <CheckCircle size={16} />
+          </div>
+          <p className="font-orbitron font-black uppercase tracking-widest text-sm">
+            Order Confirmed
+          </p>
+        </div>
+        <p
+          className={`text-xs ${isDark ? "text-neutral-400" : "text-gray-500"}`}
+        >
+          Order #{order.orderId} for {order.name} has been placed successfully.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`p-6 rounded-3xl border ${isDark ? "bg-neutral-900/50 border-white/10" : "bg-white border-gray-200"} backdrop-blur-xl shadow-2xl`}
+    >
+      <h4
+        className={`text-xs font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2 ${isDark ? "text-white/40" : "text-gray-500"} font-orbitron`}
+      >
+        <ShoppingBag size={14} /> Review Your Order
+      </h4>
+
+      <div className="flex items-center gap-4 mb-6">
+        <div
+          className={`w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden border ${isDark ? "bg-black/20 border-white/5" : "bg-gray-50 border-gray-100"}`}
+        >
+          <img
+            src={(() => {
+              const name = order.name?.toLowerCase() || "";
+              if (name.includes("stratos"))
+                return "/images/products/Hoyt Stratos bow.jpg";
+              if (name.includes("atf-x"))
+                return "/images/products/ATF-X bow image.jpg";
+              if (name.includes("title 36"))
+                return "/images/products/Mathese title 36 bow.jpg";
+              if (name.includes("pro tour"))
+                return "/images/products/Easton proTour arrow.jpg";
+              if (name.includes("achieve xp"))
+                return "/images/products/Axcel sight.jpg";
+              if (name.includes("plunger"))
+                return "/images/products/biater plunger button.jpg";
+              if (name.includes("edge stabilizer"))
+                return "/images/products/ramrod stabilizer set.jpg";
+              if (name.includes("saker 2"))
+                return "/images/products/FIvics FINGER TAB.jpg";
+              if (name.includes("formula xd"))
+                return "/images/products/Hoyt XD recurve bow.jpg";
+              if (name.includes("mk x10"))
+                return "/images/products/MK recurve bow.png";
+              if (name.includes("ns graphene"))
+                return "/images/products/win and win NS grahpen carbon limb.jpg";
+              if (name.includes("quiver"))
+                return "/images/products/Legend Archery Quiver.jpg";
+              if (name.includes("arm guard"))
+                return "/images/products/Arm guard elite.jpg";
+              if (name.includes("a/c/e") || name.includes(" ace "))
+                return "/images/products/Easton ACE arrow.jpg";
+              if (name.includes("superdrive"))
+                return "/images/products/easton superdrive 23.jpg";
+              if (name.includes("ps23"))
+                return "/images/products/black eagle ps23.png";
+              if (name.includes("block"))
+                return "/images/products/block 6x6 target.jpg";
+              if (name.includes("everest"))
+                return "/images/products/legend everest 44 case.jpg";
+              if (name.includes("compound case"))
+                return "/images/products/easton duluxe compound case(2).jpg";
+              if (name.includes("recurve case"))
+                return "/images/products/SKB iseries recurve case.jpg";
+              if (name.includes("target face"))
+                return "/images/products/target face 80 cm.jpg";
+              return `/images/products/${order.name}.jpg`;
+            })()}
+            alt=""
+            className="w-full h-full object-cover"
+            onError={(e) =>
+              (e.currentTarget.src = "/images/products/Hoyt Stratos bow.jpg")
+            }
+          />
+        </div>
+        <div className="flex-1">
+          <p
+            className={`font-black uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}
+          >
+            {order.name}
+          </p>
+          <p className={`text-xs ${activeTextClass} font-black`}>
+            ${order.price} x {order.quantity || 1}
+          </p>
+          <div className="flex gap-2 mt-1">
+            {order.color && (
+              <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-white/5 text-neutral-500 border border-white/5">
+                {order.color}
+              </span>
+            )}
+            {order.size && (
+              <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-white/5 text-neutral-500 border border-white/5">
+                {order.size}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 mb-6">
+        <p
+          className={`text-[10px] font-black uppercase tracking-widest ${isDark ? "text-neutral-500" : "text-gray-400"}`}
+        >
+          Payment Method
+        </p>
+        {savedPayments.length > 0 ? (
+          <div className="space-y-2">
+            {savedPayments.map((pm) => (
+              <button
+                key={pm.id}
+                onClick={() => setSelectedPayment(pm)}
+                className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
+                  selectedPayment?.id === pm.id
+                    ? `${activeBorderClass} ${activeBgClass}/10`
+                    : "border-white/5 bg-white/5 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {pm.type === "CARD" ? (
+                    <CreditCardIcon size={14} className="text-blue-400" />
+                  ) : (
+                    <div className="text-[10px] font-black text-green-500">
+                      UPI
+                    </div>
+                  )}
+                  <span
+                    className={`text-xs font-bold ${isDark ? "text-white" : "text-black"}`}
+                  >
+                    {pm.label}
+                  </span>
+                </div>
+                {selectedPayment?.id === pm.id && (
+                  <div
+                    className={`w-2 h-2 rounded-full ${activeBgClass} ${activeShadowClass}/50`}
+                  ></div>
+                )}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="p-3 rounded-xl border border-dashed border-white/10 text-center">
+            <p className="text-[10px] font-medium text-neutral-500 mb-2">
+              No payment methods saved
+            </p>
+            <button
+              onClick={() => onNavigate?.(AppMode.SETTINGS)}
+              className={`text-[10px] font-black uppercase tracking-widest ${activeTextClass} hover:underline`}
+            >
+              Add Payment Method
+            </button>
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={handleConfirm}
+        disabled={!selectedPayment || isConfirming}
+        className={`w-full py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-2 transition-all ${
+          !selectedPayment || isConfirming
+            ? "bg-white/5 text-white/20 cursor-not-allowed"
+            : `${activeBgClass} ${accentColor === "orange" ? "text-black" : "text-white"} hover:brightness-110 active:scale-95 shadow-xl ${activeShadowClass}/20`
+        }`}
+      >
+        {isConfirming ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>
+            Confirm Payment ${(order.price * (order.quantity || 1)).toFixed(2)}
+            <ArrowRight size={14} />
+          </>
+        )}
+      </button>
+    </div>
+  );
+};
 
 export default ChatInterface;

@@ -1,14 +1,25 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const CustomCursor: React.FC = () => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+interface CustomCursorProps {
+  themeMode?: "dark" | "light";
+}
+
+const CustomCursor: React.FC<CustomCursorProps> = ({ themeMode = "dark" }) => {
+  const cursorRef = useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const isDark = themeMode === "dark";
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setPosition({ x: e.clientX, y: e.clientY });
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate3d(${e.clientX}px, ${
+          e.clientY
+        }px, 0) translate(-50%, -50%) scale(${
+          isMouseDown ? 0.8 : isHovering ? 2.5 : 1
+        })`;
+      }
       if (!isVisible) setIsVisible(true);
     };
 
@@ -42,14 +53,14 @@ const CustomCursor: React.FC = () => {
       window.removeEventListener("mouseup", handleMouseUp);
       document.documentElement.removeEventListener(
         "mouseleave",
-        handleMouseLeave
+        handleMouseLeave,
       );
       document.documentElement.removeEventListener(
         "mouseenter",
-        handleMouseEnter
+        handleMouseEnter,
       );
     };
-  }, [isVisible]);
+  }, [isVisible, isHovering, isMouseDown]);
 
   if (typeof window === "undefined") return null;
 
@@ -73,18 +84,32 @@ const CustomCursor: React.FC = () => {
           isVisible ? "opacity-100" : "opacity-0"
         }`}
       >
-        {/* Simple Minimal Dot (Turns red on hover or click) */}
+        {/* Optimized Cursor Dot */}
         <div
-          className="fixed w-2 h-2 rounded-full transition-all duration-75 ease-out"
+          ref={cursorRef}
+          className="fixed left-0 top-0 w-3 h-3 rounded-full pointer-events-none"
           style={{
-            left: position.x,
-            top: position.y,
-            transform: `translate(-50%, -50%) scale(${
-              isMouseDown ? 0.8 : isHovering ? 2.5 : 1
-            })`,
-            backgroundColor: isHovering || isMouseDown ? "#ef4444" : "white",
+            backgroundColor:
+              isHovering || isMouseDown
+                ? "#FFD700"
+                : isDark
+                  ? "white"
+                  : "black", // Theme-aware color
+            boxShadow: isHovering ? "0 0 20px rgba(255, 215, 0, 0.5)" : "none",
+            transition: "background-color 0.2s, box-shadow 0.2s",
+            willChange: "transform",
           }}
         />
+        {/* Trail Effect (Optional, sleek) */}
+        {isHovering && (
+          <div
+            className="absolute -inset-2 border border-[#FFD700]/30 rounded-full animate-ping pointer-events-none"
+            style={{
+              left: cursorRef.current?.style.left,
+              top: cursorRef.current?.style.top,
+            }}
+          />
+        )}
       </div>
     </>
   );

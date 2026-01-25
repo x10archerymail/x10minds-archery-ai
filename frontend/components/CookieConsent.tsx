@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   Cookie,
@@ -148,8 +148,8 @@ const CookieConsent: React.FC<CookieConsentProps> = ({
       id: "analytics",
       name: "Analytics & Performance",
       icon: BarChart2,
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
+      color: "text-[#FFD700]",
+      bgColor: "bg-[#FFD700]/10",
       description:
         "These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously. This helps us improve our services.",
       required: false,
@@ -208,8 +208,8 @@ const CookieConsent: React.FC<CookieConsentProps> = ({
             /* Simple Cookie Banner */
             <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-start gap-4 flex-1">
-                <div className="p-2.5 bg-orange-500/10 rounded-xl flex-shrink-0">
-                  <Cookie className="w-6 h-6 text-orange-500" />
+                <div className="p-2.5 bg-[#FFD700]/10 rounded-xl flex-shrink-0">
+                  <Cookie className="w-6 h-6 text-[#FFD700]" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-white font-bold text-lg">
@@ -220,14 +220,14 @@ const CookieConsent: React.FC<CookieConsentProps> = ({
                     service usage, and support marketing efforts. Visit{" "}
                     <button
                       onClick={() => setShowManage(true)}
-                      className="text-orange-500 hover:text-orange-400 underline underline-offset-2 font-medium transition-colors"
+                      className="text-[#FFD700] hover:text-[#FDB931] underline underline-offset-2 font-medium transition-colors"
                     >
                       Manage Cookies
                     </button>{" "}
                     to change preferences anytime. View our{" "}
                     <a
                       href="#"
-                      className="text-orange-500 hover:text-orange-400 underline underline-offset-2 font-medium transition-colors"
+                      className="text-[#FFD700] hover:text-[#FDB931] underline underline-offset-2 font-medium transition-colors"
                     >
                       Cookie Policy
                     </a>{" "}
@@ -261,8 +261,8 @@ const CookieConsent: React.FC<CookieConsentProps> = ({
             <div className="max-w-4xl mx-auto px-4 py-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-500/10 rounded-xl">
-                    <Cookie className="w-6 h-6 text-orange-500" />
+                  <div className="p-2 bg-[#FFD700]/10 rounded-xl">
+                    <Cookie className="w-6 h-6 text-[#FFD700]" />
                   </div>
                   <div>
                     <h2 className="text-white font-bold text-xl">
@@ -328,7 +328,7 @@ const CookieConsent: React.FC<CookieConsentProps> = ({
                         <button
                           onClick={() =>
                             togglePreference(
-                              category.id as keyof CookiePreferences
+                              category.id as keyof CookiePreferences,
                             )
                           }
                           disabled={category.required}
@@ -336,8 +336,8 @@ const CookieConsent: React.FC<CookieConsentProps> = ({
                             category.required
                               ? "bg-green-500/30 cursor-not-allowed"
                               : isEnabled
-                              ? "bg-orange-500"
-                              : "bg-neutral-700"
+                                ? "bg-[#FFD700]"
+                                : "bg-neutral-700"
                           }`}
                         >
                           <div
@@ -348,7 +348,9 @@ const CookieConsent: React.FC<CookieConsentProps> = ({
                             }`}
                           >
                             {(isEnabled || category.required) && (
-                              <Check className="w-3 h-3 text-green-600" />
+                              <Check
+                                className={`w-3 h-3 ${isEnabled && !category.required ? "text-black" : "text-green-600"}`}
+                              />
                             )}
                           </div>
                         </button>
@@ -407,9 +409,9 @@ const CookieConsent: React.FC<CookieConsentProps> = ({
                   </button>
                   <button
                     onClick={handleSavePreferences}
-                    className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-orange-900/30"
+                    className="px-6 py-2.5 bg-[#FFD700] text-black text-sm font-black uppercase tracking-widest rounded-lg transition-all hover:scale-105 active:scale-95 shadow-lg shadow-[#FFD700]/10"
                   >
-                    Save Preferences
+                    Save Selection
                   </button>
                 </div>
               </div>

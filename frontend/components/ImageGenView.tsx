@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Image as ImageIcon,
   Sparkles,
@@ -12,6 +12,7 @@ import {
   Maximize,
   Smartphone,
   Monitor,
+  Target,
 } from "lucide-react";
 import {
   generateCorrectedFormImage,
@@ -40,7 +41,7 @@ const ImageGenView: React.FC<ImageGenViewProps> = ({
   // Form Correction State
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [generatedFormImage, setGeneratedFormImage] = useState<string | null>(
-    null
+    null,
   );
 
   // Creative Studio State
@@ -70,17 +71,59 @@ const ImageGenView: React.FC<ImageGenViewProps> = ({
     ? "bg-black border-neutral-800 text-white"
     : "bg-white border-gray-200 text-gray-900";
 
-  const accentClasses: Record<string, string> = {
-    orange: "from-orange-600 to-red-600 text-orange-500",
-    blue: "from-blue-600 to-indigo-600 text-blue-500",
-    green: "from-green-600 to-emerald-600 text-green-500",
-    purple: "from-purple-600 to-pink-600 text-purple-500",
-  };
+  const themes: Record<string, { gradient: string; text: string; bg: string }> =
+    {
+      orange: {
+        gradient: "from-[#FFD700] to-[#FDB931]",
+        text: "text-[#FFD700]",
+        bg: "bg-[#FFD700]",
+      },
+      blue: {
+        gradient: "from-blue-600 to-indigo-600",
+        text: "text-blue-500",
+        bg: "bg-blue-600",
+      },
+      green: {
+        gradient: "from-green-600 to-emerald-600",
+        text: "text-green-500",
+        bg: "bg-green-600",
+      },
+      purple: {
+        gradient: "from-purple-600 to-pink-600",
+        text: "text-purple-500",
+        bg: "bg-purple-600",
+      },
+      red: {
+        gradient: "from-red-600 to-orange-600",
+        text: "text-red-500",
+        bg: "bg-red-600",
+      },
+      pink: {
+        gradient: "from-pink-600 to-rose-600",
+        text: "text-pink-500",
+        bg: "bg-pink-600",
+      },
+      teal: {
+        gradient: "from-teal-600 to-cyan-600",
+        text: "text-teal-500",
+        bg: "bg-teal-600",
+      },
+      cyan: {
+        gradient: "from-cyan-600 to-blue-600",
+        text: "text-cyan-500",
+        bg: "bg-cyan-600",
+      },
+      indigo: {
+        gradient: "from-indigo-600 to-purple-600",
+        text: "text-indigo-500",
+        bg: "bg-indigo-600",
+      },
+    };
 
-  const currentAccent = accentClasses[accentColor] || accentClasses.orange;
-  const accentGradient = currentAccent.split(" text-")[0];
-  const accentText = currentAccent.split(" text-")[1];
-  const accentBg = isDark ? "bg-neutral-800" : "bg-gray-100";
+  const currentTheme = themes[accentColor] || themes.orange;
+  const accentGradient = currentTheme.gradient;
+  const accentText = currentTheme.text;
+  const accentBg = currentTheme.bg;
 
   const isPro =
     user?.subscriptionTier === "Pro" || user?.subscriptionTier === "Ultra";
@@ -206,33 +249,30 @@ const ImageGenView: React.FC<ImageGenViewProps> = ({
       </header>
 
       {/* Mode Switcher */}
-      <div
-        className={`flex p-1 rounded-xl mb-8 w-fit ${
-          isDark
-            ? "bg-neutral-900 border border-neutral-800"
-            : "bg-gray-100 border border-gray-200"
-        }`}
-      >
-        <button
-          onClick={() => setActiveTab("form")}
-          className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-            activeTab === "form"
-              ? `bg-gradient-to-r ${accentGradient} text-white shadow-md`
-              : `${subText} hover:${headerText}`
+      <div className="mb-8 w-fit">
+        <div
+          className={`flex p-1 rounded-2xl ${
+            isDark ? "bg-black/50" : "bg-white border shadow-sm"
           }`}
         >
-          <Sparkles className="w-4 h-4" /> Form Perfector
-        </button>
-        <button
-          onClick={() => setActiveTab("studio")}
-          className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
-            activeTab === "studio"
-              ? `bg-gradient-to-r ${accentGradient} text-white shadow-md`
-              : `${subText} hover:${headerText}`
-          }`}
-        >
-          <Palette className="w-4 h-4" /> Creative Studio
-        </button>
+          {[
+            { id: "form", label: "Form Vision", icon: Target },
+            { id: "studio", label: "Premium Studio", icon: Sparkles },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all ${
+                activeTab === tab.id
+                  ? `${accentBg} ${accentColor === "orange" ? "text-black" : "text-white"} shadow-lg`
+                  : "text-neutral-500 hover:text-neutral-300"
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {!canGenerate && (
@@ -280,8 +320,8 @@ const ImageGenView: React.FC<ImageGenViewProps> = ({
                 sourceImage
                   ? "border-transparent"
                   : isDark
-                  ? "border-neutral-700 hover:border-orange-500 hover:bg-neutral-800/50"
-                  : "border-gray-300 hover:border-blue-500 hover:bg-gray-100/50"
+                    ? "border-neutral-700 hover:border-[#FFD700] hover:bg-neutral-800/50"
+                    : "border-gray-300 hover:border-blue-500 hover:bg-gray-100/50"
               } ${!canGenerate && "pointer-events-none opacity-50"}`}
             >
               {sourceImage ? (
@@ -321,8 +361,8 @@ const ImageGenView: React.FC<ImageGenViewProps> = ({
                 !sourceImage || !canGenerate
                   ? "bg-neutral-800 text-neutral-600 cursor-not-allowed"
                   : isGenerating
-                  ? "bg-neutral-800 text-orange-500"
-                  : `bg-gradient-to-r ${accentGradient} text-white hover:scale-110 shadow-orange-500/20`
+                    ? "bg-neutral-800 text-[#FFD700]"
+                    : `bg-gradient-to-r ${accentGradient} text-black hover:scale-110 shadow-[#FFD700]/10`
               }`}
             >
               {isGenerating ? (
@@ -438,8 +478,8 @@ const ImageGenView: React.FC<ImageGenViewProps> = ({
                       aspectRatio === r.id
                         ? `${accentBg} border-transparent text-white`
                         : isDark
-                        ? "border-neutral-700 hover:bg-neutral-800"
-                        : "border-gray-200 hover:bg-gray-100"
+                          ? "border-neutral-700 hover:bg-neutral-800"
+                          : "border-gray-200 hover:bg-gray-100"
                     }`}
                   >
                     <r.icon className="w-5 h-5 mb-1" />
@@ -488,10 +528,10 @@ const ImageGenView: React.FC<ImageGenViewProps> = ({
                 !prompt.trim() || !canGenerate
                   ? "bg-neutral-800 text-gray-500 cursor-not-allowed"
                   : isGenerating
-                  ? "bg-neutral-800 text-gray-400"
-                  : `bg-gradient-to-r ${accentGradient} text-white shadow-lg hover:shadow-${
-                      accentText.split("-")[1]
-                    }-500/20 hover:scale-[1.02]`
+                    ? "bg-neutral-800 text-gray-400"
+                    : `bg-gradient-to-r ${accentGradient} text-white shadow-lg hover:shadow-${
+                        accentText.split("-")[1]
+                      }-500/20 hover:scale-[1.02]`
               }`}
             >
               {isGenerating ? (

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import * as React from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Trophy,
   Medal,
@@ -62,15 +63,15 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = React.memo(
       if (currentUser && publicProfile && currentUserScoreData.length > 0) {
         const avg = Math.round(
           currentUserScoreData.reduce((acc, curr) => acc + curr.score, 0) /
-            currentUserScoreData.length
+            currentUserScoreData.length,
         );
         // Calculate X count avg (mock logic for x count if not tracked per arrow)
         const xAvg =
           Math.round(
             currentUserScoreData.reduce(
               (acc, curr) => acc + (curr.xCount || 0),
-              0
-            ) / currentUserScoreData.length
+              0,
+            ) / currentUserScoreData.length,
           ) || 0;
 
         let tier = "Unranked";
@@ -105,22 +106,30 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = React.memo(
       : "bg-white border-gray-200 shadow-sm";
     const textMain = isDark ? "text-white" : "text-gray-900";
     const textSub = isDark ? "text-neutral-400" : "text-gray-500";
-    const accentText =
-      accentColor === "blue"
-        ? "text-blue-500"
-        : accentColor === "green"
-        ? "text-green-500"
-        : accentColor === "purple"
-        ? "text-purple-500"
-        : "text-orange-500";
-    const accentBg =
-      accentColor === "blue"
-        ? "bg-blue-500"
-        : accentColor === "green"
-        ? "bg-green-500"
-        : accentColor === "purple"
-        ? "bg-purple-500"
-        : "bg-orange-500";
+    const textColors: Record<string, string> = {
+      orange: "text-[#FFD700]",
+      blue: "text-blue-500",
+      green: "text-green-500",
+      purple: "text-purple-500",
+      red: "text-red-500",
+      pink: "text-pink-500",
+      teal: "text-teal-500",
+      cyan: "text-cyan-500",
+      indigo: "text-indigo-500",
+    };
+    const accentText = textColors[accentColor] || "text-[#FFD700]";
+    const bgColors: Record<string, string> = {
+      orange: "bg-[#FFD700]",
+      blue: "bg-blue-500",
+      green: "bg-green-500",
+      purple: "bg-purple-500",
+      red: "bg-red-500",
+      pink: "bg-pink-500",
+      teal: "bg-teal-500",
+      cyan: "bg-cyan-500",
+      indigo: "bg-indigo-500",
+    };
+    const accentBg = bgColors[accentColor] || "bg-[#FFD700]";
 
     const getRankBadge = (rank: number) => {
       if (rank === 1)
@@ -135,7 +144,7 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = React.memo(
     };
 
     const filteredData = data.filter((entry) =>
-      entry.name.toLowerCase().includes(searchTerm.toLowerCase())
+      entry.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     return (
@@ -217,9 +226,11 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = React.memo(
                       className={`transition-colors ${
                         entry.isCurrentUser
                           ? isDark
-                            ? "bg-white/5"
-                            : "bg-blue-50"
-                          : "hover:bg-black/5"
+                            ? "bg-[#FFD700]/5"
+                            : "bg-[#FFD700]/10"
+                          : isDark
+                            ? "hover:bg-white/5"
+                            : "hover:bg-black/5"
                       }`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -230,12 +241,12 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = React.memo(
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-black shadow-sm ${
                               entry.isCurrentUser
-                                ? accentBg
+                                ? `${accentBg} text-black`
                                 : isDark
-                                ? "bg-neutral-700"
-                                : "bg-gray-200 text-gray-500"
+                                  ? "bg-neutral-800 text-white"
+                                  : "bg-gray-200 text-gray-500"
                             }`}
                           >
                             {entry.name.charAt(0)}
@@ -265,12 +276,12 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = React.memo(
                             entry.tier === "Olympian"
                               ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
                               : entry.tier === "Elite"
-                              ? "bg-purple-500/10 text-purple-500 border-purple-500/20"
-                              : entry.tier === "Sharpshooter"
-                              ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                              : entry.tier === "Marksman"
-                              ? "bg-green-500/10 text-green-500 border-green-500/20"
-                              : "bg-gray-500/10 text-gray-500 border-gray-500/20"
+                                ? "bg-purple-500/10 text-purple-500 border-purple-500/20"
+                                : entry.tier === "Sharpshooter"
+                                  ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                                  : entry.tier === "Marksman"
+                                    ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                    : "bg-gray-500/10 text-gray-500 border-gray-500/20"
                           }`}
                         >
                           {entry.tier}
@@ -333,7 +344,7 @@ const LeaderboardView: React.FC<LeaderboardViewProps> = React.memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 export default LeaderboardView;

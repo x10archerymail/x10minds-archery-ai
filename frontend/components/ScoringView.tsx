@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Target as TargetIcon,
   Trash2,
@@ -25,6 +25,8 @@ interface ScoringViewProps {
   onDistanceChange?: (d: number) => void;
   podiums?: number;
   onAddPodium?: () => void;
+  themeMode?: "dark" | "light";
+  accentColor?: string;
 }
 
 const HistoryIcon = ({ className }: { className?: string }) => (
@@ -54,6 +56,8 @@ const ScoringView: React.FC<ScoringViewProps> = ({
   onDistanceChange,
   podiums = 0,
   onAddPodium,
+  themeMode = "dark",
+  accentColor = "orange",
 }) => {
   const [currentEnd, setCurrentEnd] = useState<Hit[]>([]);
   const [ends, setEnds] = useState<Hit[][]>([]);
@@ -61,6 +65,42 @@ const ScoringView: React.FC<ScoringViewProps> = ({
   const [isDistanceOpen, setIsDistanceOpen] = useState(false);
   const targetRef = useRef<SVGSVGElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isDark = themeMode === "dark";
+  const bgClass = isDark ? "bg-[#000]" : "bg-gray-50";
+  const cardClass = isDark
+    ? "bg-neutral-900/40 backdrop-blur-3xl border-white/5"
+    : "bg-white border-gray-200 shadow-md";
+  const headerText = isDark ? "text-white" : "text-gray-950";
+  const subText = isDark ? "text-neutral-500" : "text-gray-400";
+
+  const themes: Record<string, { text: string; bg: string; shadow: string }> = {
+    orange: {
+      text: "text-[#FFD700]",
+      bg: "bg-[#FFD700]",
+      shadow: "shadow-[#FFD700]/20",
+    },
+    blue: {
+      text: "text-blue-500",
+      bg: "bg-blue-600",
+      shadow: "shadow-blue-500/20",
+    },
+    green: {
+      text: "text-green-500",
+      bg: "bg-green-600",
+      shadow: "shadow-green-500/20",
+    },
+    purple: {
+      text: "text-purple-500",
+      bg: "bg-purple-600",
+      shadow: "shadow-purple-500/20",
+    },
+  };
+
+  const currentTheme = themes[accentColor] || themes.orange;
+  const accentText = currentTheme.text;
+  const accentBg = currentTheme.bg;
+  const accentShadow = currentTheme.shadow;
 
   useEffect(() => {
     setDistance(sessionDistance);
@@ -156,105 +196,134 @@ const ScoringView: React.FC<ScoringViewProps> = ({
     currentEnd.filter((h) => h.isX).length;
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-4 md:p-8 font-sans selection:bg-orange-500/30 overflow-hidden relative">
+    <div
+      className={`min-h-screen ${bgClass} ${isDark ? "text-white" : "text-gray-900"} p-4 md:p-8 font-sans selection:bg-[#FFD700]/30 overflow-hidden relative`}
+    >
       {/* Global Background Glows - "Out of Target" */}
-      <div className="fixed -top-24 -left-24 w-96 h-96 bg-orange-600/10 blur-[150px] rounded-full animate-pulse pointer-events-none z-0" />
-      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[180px] rounded-full animate-pulse delay-1000 pointer-events-none z-0" />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/[0.02] blur-[200px] rounded-full pointer-events-none z-0" />
+      <div
+        className={`fixed -top-24 -left-24 w-96 h-96 ${isDark ? "bg-[#FFD700]/10" : "bg-[#FFD700]/5"} blur-[150px] rounded-full animate-pulse pointer-events-none z-0`}
+      />
+      <div
+        className={`fixed bottom-0 right-0 w-[500px] h-[500px] ${isDark ? "bg-blue-600/5" : "bg-blue-600/2"} blur-[180px] rounded-full animate-pulse delay-1000 pointer-events-none z-0`}
+      />
+      <div
+        className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] ${isDark ? "bg-white/[0.02]" : "bg-black/[0.01]"} blur-[200px] rounded-full pointer-events-none z-0`}
+      />
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
-        <header className="flex items-center justify-between mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="flex items-center gap-4">
+        <header className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-4 w-full md:w-auto">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-white/5 rounded-full transition-colors border border-white/5"
+              className="p-2 hover:bg-white/5 rounded-full transition-all border border-white/5 active:scale-95"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <div>
-              <h1 className="text-3xl font-black font-orbitron tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-500">
+            <div className="overflow-hidden">
+              <h1
+                className={`text-2xl md:text-3xl font-black font-orbitron tracking-tighter bg-clip-text text-transparent bg-gradient-to-r ${isDark ? "from-white to-neutral-500" : "from-gray-950 to-gray-500"} truncate`}
+              >
                 SCORING SESSION
               </h1>
-              <p className="text-neutral-500 text-sm font-medium">
+              <p
+                className={`${subText} text-[10px] md:text-sm font-medium truncate`}
+              >
                 Capture every shot with precision & analytics
               </p>
             </div>
           </div>
 
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDistanceOpen(!isDistanceOpen)}
-              className="flex items-center gap-4 bg-neutral-900/80 backdrop-blur-2xl px-5 py-2.5 rounded-full border border-white/10 hover:border-orange-500/50 transition-all group shadow-lg shadow-black/20"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
-                  DIST
-                </span>
-                <span className="text-lg font-black text-white">
-                  {distance}m
-                </span>
-              </div>
-              <div className="w-px h-6 bg-white/10" />
-              <ChevronDown
-                className={`w-4 h-4 text-neutral-500 transition-transform duration-500 ${
-                  isDistanceOpen
-                    ? "rotate-180 text-orange-500"
-                    : "group-hover:text-white"
-                }`}
-              />
-            </button>
-
-            {isDistanceOpen && (
-              <div className="absolute top-full mt-3 left-0 w-56 bg-neutral-900/95 backdrop-blur-3xl border border-white/10 rounded-[24px] shadow-3xl z-50 overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-top-4 duration-300">
-                <div className="p-3 grid grid-cols-1 gap-1.5">
-                  <div className="px-3 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">
-                    Select Range
-                  </div>
-                  {[70, 60, 50, 40, 30, 25, 18, 10].map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => {
-                        setDistance(d);
-                        setIsDistanceOpen(false);
-                        if (onDistanceChange) onDistanceChange(d);
-                      }}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-                        distance === d
-                          ? "bg-orange-600 text-white shadow-xl shadow-orange-600/20"
-                          : "text-neutral-400 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        {d}{" "}
-                        <span className="text-[10px] opacity-50 font-normal">
-                          Meters
-                        </span>
-                      </span>
-                      {distance === d && <CheckCircle2 className="w-4 h-4" />}
-                    </button>
-                  ))}
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            <div className="relative w-full sm:w-auto" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDistanceOpen(!isDistanceOpen)}
+                className={`w-full ${isDark ? "bg-neutral-900/80 border-white/10 shadow-black/20" : "bg-white border-gray-200 shadow-gray-200/40 text-gray-950"} backdrop-blur-2xl px-5 py-2.5 rounded-full border hover:border-[#FFD700]/50 transition-all group shadow-lg flex items-center justify-between gap-4`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-[10px] font-black ${accentText} uppercase tracking-widest`}
+                  >
+                    DIST
+                  </span>
+                  <span
+                    className={`text-lg font-black ${isDark ? "text-white" : "text-gray-950"}`}
+                  >
+                    {distance}m
+                  </span>
                 </div>
-              </div>
-            )}
-          </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-neutral-500 transition-transform duration-500 ${
+                    isDistanceOpen
+                      ? "rotate-180 text-[#FFD700]"
+                      : "group-hover:text-[#FFD700]"
+                  }`}
+                />
+              </button>
+              {/* Dropdown remains same position */}
 
-          <div className="flex gap-4">
-            <div className="px-6 py-3 bg-neutral-900/50 backdrop-blur-xl border border-white/5 rounded-2xl flex flex-col items-center min-w-[100px]">
-              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
-                Total
-              </span>
-              <span className="text-2xl font-black text-white">
-                {totalScore}
-              </span>
+              {isDistanceOpen && (
+                <div className="absolute top-full mt-3 left-0 w-56 bg-neutral-900/95 backdrop-blur-3xl border border-white/10 rounded-[24px] shadow-3xl z-50 overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-top-4 duration-300">
+                  <div className="p-3 grid grid-cols-1 gap-1.5">
+                    <div className="px-3 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em]">
+                      Select Range
+                    </div>
+                    {/* Range selection buttons */}
+                    {[70, 60, 50, 40, 30, 25, 18, 10].map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => {
+                          setDistance(d);
+                          setIsDistanceOpen(false);
+                          if (onDistanceChange) onDistanceChange(d);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                          distance === d
+                            ? `${accentBg} ${accentColor === "orange" ? "text-black" : "text-white"} shadow-xl ${accentShadow}`
+                            : `${isDark ? "text-neutral-400 hover:text-white hover:bg-white/5" : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"}`
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {d}{" "}
+                          <span className="text-[10px] opacity-50 font-normal">
+                            Meters
+                          </span>
+                        </span>
+                        {distance === d && <CheckCircle2 className="w-4 h-4" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="px-6 py-3 bg-neutral-900/50 backdrop-blur-xl border border-white/5 rounded-2xl flex flex-col items-center min-w-[100px]">
-              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
-                X-Count
-              </span>
-              <span className="text-2xl font-black text-yellow-500">
-                {xCount}
-              </span>
+
+            <div className="flex gap-2 w-full sm:w-auto">
+              <div
+                className={`${isDark ? "bg-neutral-900/50 border-white/5" : "bg-white border-gray-100 shadow-sm"} backdrop-blur-xl border rounded-2xl flex flex-col items-center flex-1 sm:min-w-[100px] px-6 py-3`}
+              >
+                <span
+                  className={`text-[10px] font-bold ${subText} uppercase tracking-widest`}
+                >
+                  Total
+                </span>
+                <span
+                  className={`text-xl md:text-2xl font-black ${isDark ? "text-white" : "text-gray-950"}`}
+                >
+                  {totalScore}
+                </span>
+              </div>
+              <div
+                className={`${isDark ? "bg-neutral-900/50 border-white/5" : "bg-white border-gray-100 shadow-sm"} backdrop-blur-xl border rounded-2xl flex flex-col items-center flex-1 sm:min-w-[100px] px-6 py-3`}
+              >
+                <span
+                  className={`text-[10px] font-bold ${subText} uppercase tracking-widest`}
+                >
+                  X-Count
+                </span>
+                <span className="text-xl md:text-2xl font-black text-yellow-500">
+                  {xCount}
+                </span>
+              </div>
             </div>
           </div>
         </header>
@@ -271,7 +340,9 @@ const ScoringView: React.FC<ScoringViewProps> = ({
               <div className="absolute -right-16 top-1/4 w-44 h-44 bg-white/[0.02] border border-white/5 rounded-full backdrop-blur-[2px] pointer-events-none animate-pulse shadow-[0_0_40px_rgba(255,255,255,0.02)]" />
               <div className="absolute -right-32 bottom-1/3 w-32 h-32 bg-white/[0.01] border border-white/5 rounded-full pointer-events-none animate-pulse delay-500" />
               <div className="absolute -left-24 top-1/2 w-60 h-60 bg-white/[0.01] border border-white/[0.02] rounded-full pointer-events-none animate-pulse delay-1000" />
-              <div className="absolute left-1/4 -top-16 w-20 h-20 bg-orange-500/5 border border-orange-500/10 rounded-full blur-[1px] pointer-events-none" />
+              <div
+                className={`absolute left-1/4 -top-16 w-20 h-20 ${isDark ? "bg-[#FFD700]/5" : "bg-[#FFD700]/3"} border border-[#FFD700]/10 rounded-full blur-[1px] pointer-events-none`}
+              />
               <div className="absolute -bottom-12 right-1/2 w-40 h-40 bg-blue-500/5 border border-blue-500/10 rounded-full blur-[3px] pointer-events-none delay-300" />
 
               <svg
@@ -380,26 +451,32 @@ const ScoringView: React.FC<ScoringViewProps> = ({
                         <circle
                           cx={hit.x}
                           cy={hit.y}
-                          r="12"
+                          r="10"
                           fill="none"
                           stroke="white"
                           strokeOpacity="0.3"
                           className="animate-ping"
                         />
                       </g>
-                    )
+                    ),
                 )}
               </svg>
 
-              {/* Score Indicator Overlay - Moved 'Out of Target' */}
-              <div className="absolute -right-16 top-1/2 -translate-y-1/2 flex flex-col gap-4 pointer-events-none hidden md:flex">
+              {/* Score Indicator Overlay - Hidden on small screens, shown side of target on large */}
+              <div className="absolute -right-4 md:-right-16 top-1/2 -translate-y-1/2 flex flex-col gap-2 md:gap-4 pointer-events-none hidden lg:flex">
                 {currentEnd.map((hit, i) => (
                   <div
                     key={i}
-                    className="w-12 h-12 rounded-full bg-orange-600/20 backdrop-blur-xl border border-white/10 flex items-center justify-center font-black text-lg animate-in slide-in-from-right-8 fade-in shadow-2xl shadow-orange-600/10"
+                    className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${isDark ? "bg-[#FFD700]/20" : "bg-[#FFD700]/10"} backdrop-blur-xl border border-white/10 flex items-center justify-center font-black text-sm md:text-lg animate-in slide-in-from-right-8 fade-in shadow-2xl ${accentShadow}`}
                   >
                     <span
-                      className={hit.isX ? "text-yellow-500" : "text-white"}
+                      className={
+                        hit.isX
+                          ? "text-yellow-500"
+                          : isDark
+                            ? "text-white"
+                            : "text-gray-950"
+                      }
                     >
                       {hit.isX ? "X" : hit.score}
                     </span>
@@ -408,32 +485,40 @@ const ScoringView: React.FC<ScoringViewProps> = ({
                 {Array.from({ length: 6 - currentEnd.length }).map((_, i) => (
                   <div
                     key={i}
-                    className="w-12 h-12 rounded-full border border-white/5 bg-white/[0.03] backdrop-blur-sm animate-pulse"
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-white/5 bg-white/[0.03] backdrop-blur-sm animate-pulse"
                     style={{ animationDelay: `${i * 150}ms` }}
                   />
                 ))}
               </div>
 
               {/* Mobile Indicators Overlay (Floating Top-Right) */}
-              <div className="absolute top-4 right-4 flex md:hidden flex-wrap gap-2 max-w-[120px] justify-end">
+              <div className="absolute top-0 right-0 p-4 flex lg:hidden flex-wrap gap-2 max-w-[150px] justify-end z-20">
                 {currentEnd.map((hit, i) => (
                   <div
                     key={i}
-                    className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center font-bold text-xs animate-in zoom-in-50 fade-in"
+                    className={`w-8 h-8 rounded-full ${isDark ? "bg-white/10" : "bg-white/80"} backdrop-blur-xl border border-white/10 flex items-center justify-center font-bold text-xs animate-in zoom-in-50 fade-in shadow-lg`}
                   >
-                    {hit.isX ? "X" : hit.score}
+                    <span className={hit.isX ? "text-yellow-500" : ""}>
+                      {hit.isX ? "X" : hit.score}
+                    </span>
                   </div>
+                ))}
+                {Array.from({ length: 6 - currentEnd.length }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-8 h-8 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm"
+                  />
                 ))}
               </div>
             </div>
 
             {/* Action Bar */}
-            <div className="w-full flex justify-between items-center bg-neutral-900/30 backdrop-blur-xl p-4 rounded-3xl border border-white/5 shadow-xl mb-8">
-              <div className="flex gap-4">
+            <div className="w-full flex flex-col md:flex-row justify-between items-stretch md:items-center bg-neutral-900/30 backdrop-blur-xl p-4 md:p-6 rounded-[2rem] border border-white/5 shadow-xl mb-8 gap-4">
+              <div className="flex gap-4 justify-between md:justify-start">
                 <button
                   onClick={undoLastHit}
                   disabled={currentEnd.length === 0}
-                  className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all disabled:opacity-20"
+                  className="flex-1 md:flex-initial p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all disabled:opacity-20 active:scale-95 flex items-center justify-center"
                   title="Undo Last"
                 >
                   <RotateCcw className="w-5 h-5 text-neutral-400" />
@@ -443,39 +528,39 @@ const ScoringView: React.FC<ScoringViewProps> = ({
                     setEnds([]);
                     setCurrentEnd([]);
                   }}
-                  className="p-4 bg-white/5 hover:bg-red-500/10 rounded-2xl transition-all group"
+                  className="flex-1 md:flex-initial p-4 bg-white/5 hover:bg-red-500/10 rounded-2xl transition-all group active:scale-95 flex items-center justify-center"
                   title="Reset All"
                 >
                   <Trash2 className="w-5 h-5 text-neutral-500 group-hover:text-red-500" />
                 </button>
               </div>
 
-              <div className="flex gap-6">
+              <div className="flex flex-col sm:flex-row gap-4 flex-grow md:flex-initial">
                 <button
                   onClick={finishEnd}
                   disabled={currentEnd.length === 0}
-                  className="px-8 py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-orange-900/20 transition-all disabled:opacity-20 active:scale-95"
+                  className={`w-full sm:w-auto px-8 py-4 ${accentBg} ${accentColor === "orange" ? "text-black" : "text-white"} rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg ${accentShadow} transition-all disabled:opacity-20 active:scale-95`}
                 >
                   <CheckCircle2 className="w-5 h-5" />
                   Complete End
                 </button>
-                <div className="flex gap-6">
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                   <button
                     onClick={() => onSave(ends.flat(), ends, distance)}
                     disabled={ends.length === 0}
-                    className="flex-1 px-8 py-4 bg-orange-600 text-white hover:bg-orange-500 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl transition-all disabled:opacity-20 active:scale-95"
+                    className={`flex-1 sm:flex-initial px-8 py-4 ${accentBg} ${accentColor === "orange" ? "text-black" : "text-white"} rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-xl ${accentShadow} transition-all disabled:opacity-20 active:scale-95`}
                   >
                     <Save className="w-5 h-5" />
-                    Save to Dashboard
+                    Save
                   </button>
                   {onSaveSession && (
                     <button
                       onClick={() => onSaveSession(ends.flat(), ends, distance)}
                       disabled={ends.length === 0}
-                      className="flex-1 px-8 py-4 bg-white text-black hover:bg-neutral-200 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl transition-all disabled:opacity-20 active:scale-95"
+                      className={`flex-1 sm:flex-initial px-8 py-4 ${isDark ? "bg-white text-black" : "bg-gray-900 text-white"} hover:opacity-90 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-xl transition-all disabled:opacity-20 active:scale-95`}
                     >
                       <HistoryIcon className="w-5 h-5" />
-                      Save Session
+                      Session
                     </button>
                   )}
                 </div>
@@ -514,14 +599,14 @@ const ScoringView: React.FC<ScoringViewProps> = ({
           </div>
 
           {/* Right Sidebar: Quick Input & Stats */}
-          <div className="lg:col-span-12 xl:col-span-4 flex flex-col gap-10 animate-in fade-in slide-in-from-right-4 duration-1000 delay-300">
+          <div className="lg:col-span-12 xl:col-span-4 flex flex-col gap-6 md:gap-10 animate-in fade-in slide-in-from-right-4 duration-1000 delay-300">
             {/* Quick Score Entry */}
             <div className="bg-neutral-900/40 backdrop-blur-3xl p-6 rounded-[32px] border border-white/10 shadow-3xl">
               <h3 className="text-sm font-bold mb-5 flex items-center gap-3 text-neutral-400">
-                <Plus className="w-4 h-4 text-orange-500" />
+                <Plus className="w-4 h-4 text-[#FFD700]" />
                 Quick Score Entry
               </h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 sm:grid-cols-6 xl:grid-cols-3 gap-2">
                 {[101, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map((val) => (
                   <button
                     key={val}
@@ -533,10 +618,10 @@ const ScoringView: React.FC<ScoringViewProps> = ({
                             val === 101
                               ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 hover:bg-yellow-500/20"
                               : val === 10
-                              ? "bg-orange-500/10 text-orange-500 border-orange-500/10 hover:bg-orange-500/20"
-                              : val === 0
-                              ? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
-                              : "bg-white/5 text-white hover:bg-white/10 text-xs"
+                                ? "bg-[#FFD700]/10 text-[#FFD700] border-[#FFD700]/10 hover:bg-[#FFD700]/20"
+                                : val === 0
+                                  ? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
+                                  : "bg-white/5 text-white hover:bg-white/10 text-xs"
                           }`}
                   >
                     {val === 0 ? "M" : val === 101 ? "X" : val}
@@ -553,9 +638,9 @@ const ScoringView: React.FC<ScoringViewProps> = ({
               </h3>
               <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                 {ends.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-20 text-neutral-600">
+                  <div className="flex flex-col items-center justify-center py-10 md:py-20 text-neutral-600">
                     <TargetIcon className="w-12 h-12 mb-4 opacity-20" />
-                    <p className="text-sm">No ends recorded yet</p>
+                    <p className="text-sm font-black uppercase tracking-widest">No entries recorded</p>
                   </div>
                 )}
                 {ends
@@ -564,23 +649,23 @@ const ScoringView: React.FC<ScoringViewProps> = ({
                   .map((end, endIdx) => (
                     <div
                       key={endIdx}
-                      className="p-4 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/10 transition-all"
+                      className="p-4 bg-white/5 border border-white/5 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between group hover:bg-white/10 transition-all gap-4"
                     >
                       <div className="flex items-center gap-4">
-                        <span className="w-8 h-8 rounded-full bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-xs font-bold text-orange-500">
+                        <span className="w-8 h-8 shrink-0 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20 flex items-center justify-center text-[10px] font-black text-[#FFD700]">
                           {ends.length - endIdx}
                         </span>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           {end.map((hit, i) => (
                             <span
                               key={i}
-                              className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black
                                     ${
                                       hit.isX
                                         ? "bg-yellow-500/20 text-yellow-500"
                                         : hit.score >= 9
-                                        ? "bg-orange-500/20 text-orange-500"
-                                        : "bg-neutral-800 text-neutral-400"
+                                          ? "bg-[#FFD700]/20 text-[#FFD700]"
+                                          : "bg-neutral-800 text-neutral-400"
                                     }`}
                             >
                               {hit.isX ? "X" : hit.score}
@@ -588,12 +673,12 @@ const ScoringView: React.FC<ScoringViewProps> = ({
                           ))}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0 border-white/5 flex sm:flex-col justify-between items-center sm:items-end">
                         <div className="text-xl font-black text-white">
                           {end.reduce((acc, h) => acc + h.score, 0)}
                         </div>
-                        <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mt-0.5">
-                          Running Total:{" "}
+                        <div className="text-[8px] font-black text-neutral-500 uppercase tracking-widest">
+                          Total:{" "}
                           {ends
                             .slice(0, ends.length - endIdx)
                             .flat()
@@ -628,7 +713,7 @@ const ScoringView: React.FC<ScoringViewProps> = ({
                       <span className="text-neutral-500 text-sm">
                         Session Total
                       </span>
-                      <span className="font-black text-xl text-orange-500">
+                      <span className="font-black text-xl text-[#FFD700]">
                         {totalScore}
                       </span>
                     </div>

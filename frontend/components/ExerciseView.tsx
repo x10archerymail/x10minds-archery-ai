@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import * as React from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dumbbell,
   PlayCircle,
@@ -11,7 +12,7 @@ import {
   CheckCircle2,
   X,
   Maximize2,
-  Minimize2,
+  Minimize,
 } from "lucide-react";
 import { generateExercisePlan } from "../services/geminiService";
 import { Exercise } from "../types";
@@ -41,9 +42,18 @@ const ExerciseAnimator = React.memo<{
         ? "#22c55e"
         : accentColor === "purple"
           ? "#a855f7"
-          : "#ea580c";
+          : accentColor === "red"
+            ? "#ef4444"
+            : accentColor === "pink"
+              ? "#ec4899"
+              : accentColor === "teal"
+                ? "#14b8a6"
+                : accentColor === "cyan"
+                  ? "#06b6d4"
+                  : accentColor === "indigo"
+                    ? "#6366f1"
+                    : "#FFD700";
 
-  // Static display for exercise types
   return (
     <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
       {/* Background Effects - Static */}
@@ -57,36 +67,42 @@ const ExerciseAnimator = React.memo<{
 
       {/* Subtle Breathing Glow */}
       <div
-        className="absolute w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none"
+        className="absolute w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.1] pointer-events-none"
         style={{
           background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
           animation: "breathing-glow 6s ease-in-out infinite",
         }}
       />
 
-      <div className="relative z-10 w-full max-w-[400px] h-full flex items-center justify-center">
+      <div className="relative z-10 w-full max-w-[500px] h-full flex items-center justify-center">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center gap-4">
-            {/* Static Loader */}
             <Loader2
-              className={`w-12 h-12 ${isDark ? "text-white" : "text-black"}`}
+              className={`w-12 h-12 animate-spin ${isDark ? "text-white" : "text-black"}`}
             />
-            <span className="text-xs font-mono opacity-50">GENERATING...</span>
+            <span className="text-xs font-black tracking-[0.3em] opacity-50 uppercase">
+              Processing Intel...
+            </span>
           </div>
         ) : (
-          <div className="flex flex-col items-center opacity-50">
-            {/* Static Dumbbell instead of Animation */}
-            <div className="text-center p-4">
-              <div className="relative inline-block">
-                <Dumbbell className="w-32 h-32 mb-4 mx-auto opacity-20" />
-                <div
-                  className="absolute inset-0 blur-3xl opacity-20"
-                  style={{ backgroundColor: color }}
-                />
+          <div className="relative w-full h-full flex flex-col items-center justify-center">
+            {/* Generic Idle/Other Animation instead of exercise-specific ones */}
+            <div className="relative w-full aspect-square max-h-[400px] group">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity" />
+              <video
+                src="/animations/idle.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-contain mix-blend-lighten drop-shadow-[0_0_30px_rgba(255,215,0,0.2)]"
+              />
+              {/* Overlay Label */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-80 text-white">
+                  {type === "IDLE" ? "System Idle" : "Active Session"}
+                </p>
               </div>
-              <p className="text-lg uppercase font-bold tracking-widest opacity-40">
-                {type.replace(/_/g, " ")}
-              </p>
             </div>
           </div>
         )}
@@ -137,7 +153,7 @@ const PlanListItem = React.memo<{
         </p>
         <p className="text-[10px] font-bold uppercase opacity-60">
           {ex.sets} {t("sets_label")} •{" "}
-          {(ex.duration ?? 0) > 0 ? `${ex.duration}s` : ex.reps}
+          {ex.duration && ex.duration > 0 ? `${ex.duration}s` : ex.reps}
         </p>
       </div>
     </button>
@@ -187,12 +203,17 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
     const subText = isDark ? "text-neutral-400" : "text-gray-500";
 
     const accentClasses: Record<string, string> = {
-      orange: "text-orange-500",
+      orange: "text-[#FFD700]",
       blue: "text-blue-500",
       green: "text-green-500",
       purple: "text-purple-500",
+      red: "text-red-500",
+      pink: "text-pink-500",
+      teal: "text-teal-500",
+      cyan: "text-cyan-500",
+      indigo: "text-indigo-500",
     };
-    const accentText = accentClasses[accentColor] || "text-orange-500";
+    const accentText = accentClasses[accentColor] || "text-[#FFD700]";
     const accentBg =
       accentColor === "blue"
         ? "bg-blue-600"
@@ -200,7 +221,17 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
           ? "bg-green-600"
           : accentColor === "purple"
             ? "bg-purple-600"
-            : "bg-orange-600";
+            : accentColor === "red"
+              ? "bg-red-600"
+              : accentColor === "pink"
+                ? "bg-pink-600"
+                : accentColor === "teal"
+                  ? "bg-teal-600"
+                  : accentColor === "cyan"
+                    ? "bg-cyan-600"
+                    : accentColor === "indigo"
+                      ? "bg-indigo-600"
+                      : "bg-[#FFD700]";
 
     const handleGenerate = async () => {
       setIsLoading(true);
@@ -219,7 +250,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
               .map(
                 (e: Exercise, i: number) =>
                   `${i + 1}. **${e.name}**\n   - ${e.sets} sets x ${
-                    e.reps && e.reps !== "0" ? e.reps : e.duration + "s"
+                    e.reps && e.reps !== "0" ? e.reps : (e.duration ?? 0) + "s"
                   }\n   - ${e.description}`,
               )
               .join("\n\n");
@@ -281,9 +312,9 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
       } else if (
         timer === 0 &&
         isPlaying &&
+        !isPaused &&
         plan &&
-        plan[currentStep] &&
-        (plan[currentStep].duration ?? 0) > 0
+        (plan[currentStep]?.duration ?? 0) > 0
       ) {
         // Auto advance for duration-based exercises if not last step
         if (currentStep < plan.length - 1) {
@@ -396,7 +427,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                   className={`w-full py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all mt-6 ${
                     isLoading
                       ? "bg-neutral-800 text-neutral-500 cursor-not-allowed opacity-50"
-                      : `${accentBg} text-white hover:scale-[1.02] active:scale-95 shadow-xl shadow-orange-600/20`
+                      : `${accentBg} ${accentColor === "orange" ? "text-black" : "text-white"} hover:scale-[1.02] active:scale-95 shadow-xl shadow-[#FFD700]/10`
                   }`}
                 >
                   {isLoading ? (
@@ -429,7 +460,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                         console.log("Start Workout clicked");
                         startWorkout();
                       }}
-                      className={`relative z-10 w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-black flex items-center justify-center gap-3 text-white transition-all hover:scale-105 active:scale-95 shadow-2xl cursor-pointer ${accentBg}`}
+                      className={`relative z-10 w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl cursor-pointer ${accentBg} ${accentColor === "orange" ? "text-black" : "text-white"}`}
                     >
                       <PlayCircle className="w-5 h-5 sm:w-6 sm:h-6" />{" "}
                       {t("start_workout")}
@@ -439,7 +470,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                     {plan.map((ex, idx) => (
                       <div
                         key={idx}
-                        className={`p-6 rounded-2xl border flex items-center justify-between group cursor-default transition-all hover:border-orange-500/50 ${cardClass}`}
+                        className={`p-6 rounded-2xl border flex items-center justify-between group cursor-default transition-all hover:border-[#FFD700]/50 ${cardClass}`}
                       >
                         <div className="flex items-center gap-6">
                           <div
@@ -459,7 +490,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                               className={`text-sm tracking-wide font-medium ${subText}`}
                             >
                               {ex.sets} {t("sets_label")} •{" "}
-                              {(ex.duration ?? 0) > 0
+                              {ex.duration && ex.duration > 0
                                 ? `${ex.duration}s`
                                 : ex.reps}
                             </p>
@@ -480,13 +511,13 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                 </div>
               ) : (
                 <div
-                  className={`h-[600px] flex flex-col items-center justify-center rounded-[32px] border border-dashed relative overflow-hidden ${
+                  className={`h-[500px] sm:h-[600px] flex flex-col items-center justify-start pt-8 rounded-[32px] border border-dashed relative overflow-y-auto overflow-x-hidden custom-scrollbar ${
                     isDark
                       ? "bg-neutral-900/30 border-neutral-800"
                       : "bg-white border-gray-200"
                   }`}
                 >
-                  <div className="w-full max-w-sm h-96">
+                  <div className="w-full max-w-sm h-64 sm:h-96 flex-shrink-0">
                     <ExerciseAnimator
                       type="IDLE"
                       isDark={isDark}
@@ -508,7 +539,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-3xl bg-orange-500/10 flex items-center justify-center mb-2">
+                        <div className="w-16 h-16 rounded-3xl bg-[#FFD700]/10 flex items-center justify-center mb-2">
                           <Dumbbell className={`w-8 h-8 ${accentText}`} />
                         </div>
                         <h3 className={`text-xl font-black ${headerText}`}>
@@ -531,7 +562,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                                 <button
                                   key={idx}
                                   onClick={() => setPlan(p.exercises)}
-                                  className={`p-6 rounded-2xl border text-left group transition-all duration-300 hover:scale-[1.02] active:scale-95 ${cardClass} hover:border-orange-500/50`}
+                                  className={`p-6 rounded-2xl border text-left group transition-all duration-300 hover:scale-[1.02] active:scale-95 ${cardClass} hover:border-[#FFD700]/50`}
                                 >
                                   <div className="flex items-center justify-between mb-2">
                                     <h5
@@ -545,7 +576,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                                     {p.exercises.map((e) => e.name).join(", ")}
                                   </p>
                                   <div className="flex items-center gap-4">
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-500 uppercase tracking-tighter">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFD700]/10 text-[#FFD700] uppercase tracking-tighter">
                                       {p.exercises.length} Exercises
                                     </span>
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 uppercase tracking-tighter">
@@ -588,15 +619,15 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
             className={`max-w-md w-full p-12 rounded-[48px] text-center border shadow-2xl ${cardClass}`}
           >
             <div className="mb-8 relative inline-block">
-              <div className="p-8 rounded-full bg-orange-500/10 border-4 border-orange-500/20">
+              <div className="p-8 rounded-full bg-[#FFD700]/10 border-4 border-[#FFD700]/20">
                 <CheckCircle2 className={`w-20 h-20 ${accentText}`} />
               </div>
-              <div className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg">
+              <div className="absolute -top-2 -right-2 bg-[#FFD700] text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg">
                 Finished
               </div>
             </div>
             <h1
-              className={`text-4xl font-black mb-4 uppercase tracking-tighter ${headerText}`}
+              className={`text-3xl sm:text-4xl font-black mb-4 uppercase tracking-tighter ${headerText}`}
             >
               Session Complete
             </h1>
@@ -642,7 +673,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
             </div>
             <button
               onClick={() => setIsFinished(false)}
-              className={`w-full py-5 rounded-[24px] font-black text-white shadow-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 ${accentBg}`}
+              className={`w-full py-5 rounded-[24px] font-black shadow-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 ${accentBg} ${accentColor === "orange" ? "text-black" : "text-white"}`}
             >
               Return to Dashboard
             </button>
@@ -652,8 +683,9 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
     }
 
     // PLAYER MODE
-    const activeEx = plan![currentStep];
-    const progress = ((currentStep + 1) / plan!.length) * 100;
+    if (!plan || !plan[currentStep]) return null;
+    const activeEx = plan[currentStep];
+    const progress = ((currentStep + 1) / plan.length) * 100;
 
     const getRefinedAnimationType = (ex: Exercise) => {
       const n = ex.name.toUpperCase();
@@ -750,13 +782,13 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
           >
             <span className={accentText}>{currentStep + 1}</span>
             <span className="opacity-30">/</span>
-            <span>{plan!.length}</span>
+            <span>{plan.length}</span>
           </div>
         </header>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Main Stage */}
-          <div className="flex-1 relative flex flex-col">
+          <div className="relative flex flex-col h-[45vh] md:h-auto md:flex-1">
             <div className="flex-1 relative flex items-center justify-center p-8 lg:p-12 overflow-hidden">
               <div className="w-full h-full max-w-2xl max-h-[600px] flex items-center justify-center pointer-events-none">
                 <ExerciseAnimator
@@ -769,7 +801,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
 
               {/* Float Controls */}
               <div
-                className={`absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-6 px-4 sm:px-8 py-3.5 sm:py-5 rounded-[24px] sm:rounded-[32px] backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 z-[250] pointer-events-auto ${
+                className={`absolute bottom-4 sm:bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-6 px-4 sm:px-8 py-3.5 sm:py-5 rounded-[24px] sm:rounded-[32px] backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 z-[250] pointer-events-auto ${
                   isDark ? "bg-black/40" : "bg-white/80"
                 }`}
               >
@@ -778,7 +810,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                     // Smart Previous Logic
                     // If playing for > 3 seconds, restart current exercise
                     // If playing for < 3 seconds, go to previous exercise
-                    const initialDuration = plan![currentStep].duration || 60;
+                    const initialDuration = plan[currentStep].duration || 60;
                     const timeElapsed = initialDuration - timer;
 
                     if (currentStep > 0 && timeElapsed < 3) {
@@ -800,7 +832,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                 >
                   {/* Show SkipBack icon if we would skip back, else RotateCcw */}
                   {currentStep > 0 &&
-                  (plan![currentStep].duration || 60) - timer < 3 ? (
+                  (plan[currentStep].duration || 60) - timer < 3 ? (
                     <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
                   ) : (
                     <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -832,37 +864,25 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                 </button>
               </div>
             </div>
-
-            {/* Mobile Info Overlay (visible only on small screens) */}
-            <div className={`md:hidden p-6 border-t ${cardClass}`}>
-              <h1 className={`text-2xl font-black mb-2 ${headerText}`}>
-                {activeEx.name}
-              </h1>
-              <p
-                className={`text-sm ${subText} mt-2 max-h-[120px] overflow-y-auto`}
-              >
-                {activeEx.description}
-              </p>
-            </div>
           </div>
 
           {/* Info & List Panel (The "See Everything" part) */}
           <aside
-            className={`hidden md:flex md:w-[320px] lg:w-[400px] flex-col border-l overflow-hidden ${
+            className={`flex flex-1 md:flex-none w-full md:w-[320px] lg:w-[400px] flex-col border-t md:border-t-0 md:border-l overflow-hidden ${
               isDark
                 ? "bg-neutral-900 border-neutral-800"
                 : "bg-white border-gray-200"
             }`}
           >
             {/* Active Info */}
-            <div className="p-8 border-b border-neutral-800/50">
+            <div className="p-6 sm:p-8 border-b border-neutral-800/50">
               <span
                 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 block ${accentText}`}
               >
                 {t("now_training")}
               </span>
               <h1
-                className={`text-3xl font-black mb-4 leading-tight tracking-tighter uppercase ${headerText}`}
+                className={`text-2xl sm:text-3xl font-black mb-4 leading-tight tracking-tighter uppercase ${headerText}`}
               >
                 {activeEx.name}
               </h1>
@@ -901,7 +921,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                   <p
                     className={`text-xl font-black ${
                       (activeEx.duration ?? 0) > 0 && timer > 0
-                        ? "text-orange-500"
+                        ? "text-[#FFD700]"
                         : headerText
                     }`}
                   >
@@ -921,7 +941,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                   title={isDescExpanded ? "Minimize" : "Extend"}
                 >
                   {isDescExpanded ? (
-                    <Minimize2 className="w-4 h-4" />
+                    <Minimize className="w-4 h-4" />
                   ) : (
                     <Maximize2 className="w-4 h-4" />
                   )}
@@ -940,7 +960,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
 
             {/* Full List ("See Everything") */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="px-8 py-4 border-b border-neutral-800/50 flex items-center justify-between bg-black/20">
+              <div className="px-6 sm:px-8 py-4 border-b border-neutral-800/50 flex items-center justify-between bg-black/20">
                 <span
                   className={`text-[10px] font-black uppercase tracking-widest ${subText}`}
                 >

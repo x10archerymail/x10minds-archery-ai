@@ -3,8 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Archery AI X10Minds AI - Advanced Archery Coaching</title>
-    <meta name="description" content="Archery AI X10Minds AI is an Artificial General Intelligence designed to coach archers. We provide biomechanical analysis, training plans, and mental support for elite performance." />
+    <title>X10Minds - AI Archery Coach</title>
+    <meta
+      name="description"
+      content="X10Minds is an Artificial General Intelligence designed to coach archers. We provide biomechanical analysis, training plans, and mental support for elite performance."
+    />
     <link rel="icon" type="image/png" href="/images/X10Mindsfevicon.png" />
     <script>
       window.tailwind.config = {
@@ -38,21 +41,32 @@
         -webkit-font-smoothing: antialiased;
         overflow-x: hidden;
       }
+      ::selection {
+        background: rgba(234, 88, 12, 0.3); /* Orange/Gold tint */
+        color: #fff;
+      }
       .font-orbitron {
         font-family: "Orbitron", sans-serif;
       }
-      
+
       /* Premium Background */
       body::before {
-        content: '';
+        content: "";
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: 
-          radial-gradient(circle at 20% 30%, rgba(234, 88, 12, 0.05) 0%, transparent 40%),
-          radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+        background: radial-gradient(
+            circle at 20% 30%,
+            rgba(234, 88, 12, 0.05) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgba(59, 130, 246, 0.05) 0%,
+            transparent 40%
+          );
         pointer-events: none;
         z-index: -1;
       }
@@ -82,14 +96,14 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
       }
-      
+
       .glass-input {
         background: rgba(0, 0, 0, 0.4);
         backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         transition: all 0.3s ease;
       }
-      
+
       .glass-input:focus {
         border-color: rgba(234, 88, 12, 0.5);
         box-shadow: 0 0 15px rgba(234, 88, 12, 0.2);
@@ -130,10 +144,18 @@
       }
 
       @keyframes loading-bounce {
-        0% { transform: scale(1, 0.7); }
-        40% { transform: scale(0.8, 1.2); }
-        60% { transform: scale(1, 1); }
-        100% { bottom: 140px; }
+        0% {
+          transform: scale(1, 0.7);
+        }
+        40% {
+          transform: scale(0.8, 1.2);
+        }
+        60% {
+          transform: scale(1, 1);
+        }
+        100% {
+          bottom: 140px;
+        }
       }
 
       @keyframes loading-step {
@@ -148,13 +170,25 @@
       }
 
       @keyframes float {
-        0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
-        50% { transform: translateY(-20px) rotateX(5deg) rotateY(5deg); }
+        0%,
+        100% {
+          transform: translateY(0) rotateX(0) rotateY(0);
+        }
+        50% {
+          transform: translateY(-20px) rotateX(5deg) rotateY(5deg);
+        }
       }
 
       @keyframes pulse-glow {
-        0%, 100% { opacity: 0.5; box-shadow: 0 0 0 rgba(234, 88, 12, 0); }
-        50% { opacity: 1; box-shadow: 0 0 20px rgba(234, 88, 12, 0.3); }
+        0%,
+        100% {
+          opacity: 0.5;
+          box-shadow: 0 0 0 rgba(234, 88, 12, 0);
+        }
+        50% {
+          opacity: 1;
+          box-shadow: 0 0 20px rgba(234, 88, 12, 0.3);
+        }
       }
 
       .animate-float {
@@ -166,13 +200,26 @@
       }
 
       /* 4K and Large Screen Scaling */
-      @media (min-width: 1920px) { html { font-size: 18px; } }
-      @media (min-width: 2560px) { html { font-size: 20px; } }
-      @media (min-width: 3840px) { html { font-size: 24px; } }
+      @media (min-width: 1920px) {
+        html {
+          font-size: 18px;
+        }
+      }
+      @media (min-width: 2560px) {
+        html {
+          font-size: 20px;
+        }
+      }
+      @media (min-width: 3840px) {
+        html {
+          font-size: 24px;
+        }
+      }
 
       /* Transitions */
       * {
-        transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        transition: background-color 0.3s ease, border-color 0.3s ease,
+          transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
       }
 
       button:active {

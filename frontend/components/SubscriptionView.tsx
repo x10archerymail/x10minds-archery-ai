@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Check, Shield, Zap, Crown, Globe, ChevronDown } from "lucide-react";
 import { SubscriptionTier } from "../types";
 
@@ -39,7 +39,7 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [billingPeriod, setBillingPeriod] = useState(1); // months
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(
-    currencies[0]
+    currencies[0],
   ); // Default to INR
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
 
@@ -56,11 +56,11 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
         <div
           className={`w-24 h-24 rounded-[2rem] flex items-center justify-center mb-8 border shadow-2xl ${
             isDark
-              ? "bg-neutral-900 border-neutral-800"
+              ? "bg-neutral-900 border-white/5"
               : "bg-white border-gray-200"
           }`}
         >
-          <Shield className="w-10 h-10 text-orange-500" />
+          <Shield className="w-10 h-10 text-[#FFD700]" />
         </div>
         <h2 className={`text-4xl font-bold mb-6 ${headerText}`}>
           Guest Access Restricted
@@ -105,10 +105,15 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
   }
 
   const accentClasses: Record<string, string> = {
-    orange: "from-orange-600 to-red-600 text-orange-500",
+    orange: "from-[#FFD700] to-[#FDB931] text-[#FFD700]",
     blue: "from-blue-600 to-indigo-600 text-blue-500",
     green: "from-green-600 to-emerald-600 text-green-500",
     purple: "from-purple-600 to-pink-600 text-purple-500",
+    red: "from-red-600 to-orange-600 text-red-500",
+    pink: "from-pink-600 to-rose-600 text-pink-500",
+    teal: "from-teal-600 to-cyan-600 text-teal-500",
+    cyan: "from-cyan-600 to-blue-600 text-cyan-500",
+    indigo: "from-indigo-600 to-purple-600 text-indigo-500",
   };
 
   const currentAccent = accentClasses[accentColor] || accentClasses.orange;
@@ -157,7 +162,7 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
       console.error(e);
       if (btn) btn.innerText = "Payment Failed";
       alert(
-        "Stripe configuration missing. Please check services/stripeService.ts"
+        "Stripe configuration missing. Please check services/stripeService.ts",
       );
     }
   };
@@ -208,21 +213,13 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
       bg: isDark
         ? `bg-neutral-900 shadow-xl ${
             accentColor === "orange"
-              ? "shadow-orange-900/20"
-              : accentColor === "blue"
-              ? "shadow-blue-900/20"
-              : accentColor === "green"
-              ? "shadow-green-900/20"
-              : "shadow-purple-900/20"
+              ? "shadow-[#FFD700]/10"
+              : `shadow-${accentColor}-900/20`
           }`
         : `bg-white shadow-xl ${
             accentColor === "orange"
-              ? "shadow-orange-500/10"
-              : accentColor === "blue"
-              ? "shadow-blue-500/10"
-              : accentColor === "green"
-              ? "shadow-green-500/10"
-              : "shadow-purple-500/10"
+              ? "shadow-[#FFD700]/10"
+              : `shadow-${accentColor}-500/10`
           }`,
       features: [
         "Unlimited Chat Tokens",
@@ -352,8 +349,8 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
                                 accentText.split("-")[0] || "orange"
                               }-500 ${selectedPlan.color}`
                             : isDark
-                            ? "bg-neutral-800/30 border-white/5 text-neutral-400 hover:border-white/10"
-                            : "bg-white border-gray-200 text-gray-400 hover:border-gray-300"
+                              ? "bg-neutral-800/30 border-white/5 text-neutral-400 hover:border-white/10"
+                              : "bg-white border-gray-200 text-gray-400 hover:border-gray-300"
                         }
                       `}
                     >
@@ -416,10 +413,14 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
                 <button
                   id="stripe-btn"
                   onClick={handlePayment}
-                  className={`w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl hover:scale-[1.02] flex items-center justify-center gap-3 bg-gradient-to-r ${accentGradient} text-white shadow-black/20`}
+                  className={`w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl hover:scale-[1.02] flex items-center justify-center gap-3 ${
+                    accentColor === "orange"
+                      ? "bg-[#FFD700] text-black shadow-[#FFD700]/10"
+                      : `bg-gradient-to-r ${accentGradient} text-white shadow-black/20`
+                  }`}
                 >
                   <svg
-                    className="w-12 h-6"
+                    className={`w-12 h-6 ${accentColor === "orange" ? "text-black" : "text-white"}`}
                     viewBox="0 0 40 16"
                     fill="currentColor"
                   >
@@ -464,7 +465,7 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
               >
                 {plan.popular && (
                   <div
-                    className={`absolute top-0 right-0 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl bg-gradient-to-r ${accentGradient}`}
+                    className={`absolute top-0 right-0 ${accentColor === "orange" ? "text-black" : "text-white"} text-[10px] font-black tracking-widest px-4 py-1.5 rounded-bl-2xl bg-[#FFD700] shadow-lg shadow-[#FFD700]/10`}
                   >
                     MOST POPULAR
                   </div>
@@ -515,10 +516,12 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
                           ? "bg-neutral-800 text-neutral-500 cursor-default"
                           : "bg-gray-100 text-gray-400 cursor-default"
                         : plan.popular
-                        ? `bg-gradient-to-r ${accentGradient} text-white hover:shadow-lg shadow-black/10`
-                        : isDark
-                        ? "bg-white text-black hover:bg-neutral-200"
-                        : `bg-gray-900 text-white hover:bg-black`
+                          ? accentColor === "orange"
+                            ? "bg-[#FFD700] text-black hover:brightness-110 shadow-lg shadow-[#FFD700]/10"
+                            : `bg-gradient-to-r ${accentGradient} text-white hover:shadow-lg shadow-black/10`
+                          : isDark
+                            ? "bg-white text-black hover:bg-neutral-200"
+                            : `bg-gray-900 text-white hover:bg-black`
                     }
                   `}
                 >
@@ -580,16 +583,12 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
                       selectedCurrency.code === curr.code
                         ? `${
                             accentColor === "orange"
-                              ? "bg-orange-500"
-                              : accentColor === "blue"
-                              ? "bg-blue-500"
-                              : accentColor === "green"
-                              ? "bg-green-500"
-                              : "bg-purple-500"
-                          } text-white`
+                              ? "bg-[#FFD700] text-black"
+                              : `bg-${accentColor}-500 text-white`
+                          }`
                         : isDark
-                        ? "text-neutral-400 hover:bg-white/5 hover:text-white"
-                        : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                          ? "text-neutral-400 hover:bg-white/5 hover:text-white"
+                          : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                     }
                   `}
                 >

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Keyboard, ArrowLeft, Edit2, Check, RefreshCw, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Keyboard, ArrowLeft, Check, RefreshCw, X } from "lucide-react";
 import { AppMode } from "../types";
 import { getTranslation } from "../i18n";
 
@@ -15,9 +15,10 @@ interface ShortcutsViewProps {
     theme: string;
   };
   onUpdateShortcuts?: (shortcuts: any) => void;
+  accentColor?: string;
 }
 
-export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
+const ShortcutsView: React.FC<ShortcutsViewProps> = ({
   onBackendNavigate,
   isDark,
   language = "English",
@@ -29,9 +30,37 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
     theme: "ctrl+t",
   },
   onUpdateShortcuts,
+  accentColor = "orange",
 }) => {
   const t = (key: string) => getTranslation(language, key);
   const [editingKey, setEditingKey] = useState<string | null>(null);
+
+  const textColors: Record<string, string> = {
+    blue: "text-blue-500",
+    green: "text-green-500",
+    purple: "text-purple-500",
+    red: "text-red-500",
+    pink: "text-pink-500",
+    teal: "text-teal-500",
+    cyan: "text-cyan-500",
+    indigo: "text-indigo-500",
+    orange: "text-[#FFD700]",
+  };
+  const accentText = textColors[accentColor] || textColors.orange;
+
+  const bgColors: Record<string, string> = {
+    blue: "bg-blue-500",
+    green: "bg-green-500",
+    purple: "bg-purple-500",
+    red: "bg-red-500",
+    pink: "bg-pink-500",
+    teal: "bg-teal-500",
+    cyan: "bg-cyan-500",
+    indigo: "bg-indigo-500",
+    orange: "bg-[#FFD700]",
+  };
+  const accentBg = bgColors[accentColor] || bgColors.orange;
+  const accentColorValue = accentColor === "orange" ? "#FFD700" : undefined;
 
   // Capture keystrokes when editing
   useEffect(() => {
@@ -91,11 +120,14 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
   const handleReset = () => {
     if (confirm("Reset all shortcuts to default?") && onUpdateShortcuts) {
       onUpdateShortcuts({
-        history: "ctrl+h",
-        chat: "ctrl+k",
-        settings: "ctrl+,",
-        help: "ctrl+/",
-        theme: "ctrl+t",
+        history: "alt+h",
+        chat: "alt+c",
+        settings: "alt+,",
+        help: "alt+/",
+        theme: "alt+t",
+        dashboard: "alt+d",
+        calculator: "alt+k",
+        shop: "alt+s",
       });
     }
   };
@@ -124,7 +156,7 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
             </button>
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-3">
-                <Keyboard className="w-8 h-8 text-orange-500" />
+                <Keyboard className={`w-8 h-8 ${accentText}`} />
                 Keyboard Shortcuts
               </h1>
               <p
@@ -149,41 +181,62 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
           </button>
         </header>
 
-        <div className={`rounded-2xl p-6 mb-8 border ${
-          isDark 
-            ? "bg-neutral-900/50 border-neutral-800" 
-            : "bg-white border-gray-200"
-        }`}>
+        <div
+          className={`rounded-2xl p-6 mb-8 border ${
+            isDark
+              ? "bg-neutral-900/50 border-neutral-800"
+              : "bg-white border-gray-200"
+          }`}
+        >
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <span className="w-2 h-8 rounded-full bg-orange-500"></span>
+            <span className={`w-2 h-8 rounded-full ${accentBg}`}></span>
             How to Customise
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex gap-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                isDark ? "bg-neutral-800" : "bg-orange-100 text-orange-600"
-              }`}>1</div>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  isDark ? "bg-neutral-800" : `${accentBg}/10 text-black`
+                }`}
+              >
+                1
+              </div>
               <div>
                 <p className="font-bold mb-1">Select Action</p>
-                <p className="text-sm opacity-60">Click the Edit icon (pencil) next to the command you want to change.</p>
+                <p className="text-sm opacity-60">
+                  Click the Edit icon (pencil) next to the command you want to
+                  change.
+                </p>
               </div>
             </div>
             <div className="flex gap-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                isDark ? "bg-neutral-800" : "bg-orange-100 text-orange-600"
-              }`}>2</div>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  isDark ? "bg-neutral-800" : `${accentBg}/10 text-black`
+                }`}
+              >
+                2
+              </div>
               <div>
                 <p className="font-bold mb-1">Press Keys</p>
-                <p className="text-sm opacity-60">Press your desired key combination (e.g. Ctrl + Shift + P).</p>
+                <p className="text-sm opacity-60">
+                  Press your desired key combination (e.g. Ctrl + Shift + P).
+                </p>
               </div>
             </div>
             <div className="flex gap-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                isDark ? "bg-neutral-800" : "bg-orange-100 text-orange-600"
-              }`}>3</div>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  isDark ? "bg-neutral-800" : `${accentBg}/10 text-black`
+                }`}
+              >
+                3
+              </div>
               <div>
                 <p className="font-bold mb-1">Save & Use</p>
-                <p className="text-sm opacity-60">The shortcut is saved instantly. Reset anytime if needed.</p>
+                <p className="text-sm opacity-60">
+                  The shortcut is saved instantly. Reset anytime if needed.
+                </p>
               </div>
             </div>
           </div>
@@ -215,11 +268,7 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
                 <div
                   key={item.key}
                   className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-5 items-center transition-all ${
-                    isActive
-                      ? isDark
-                        ? "bg-orange-500/10"
-                        : "bg-orange-50"
-                      : hoverBg
+                    isActive ? `${accentBg}/10` : hoverBg
                   }`}
                 >
                   <div className="md:col-span-5">
@@ -229,7 +278,9 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
 
                   <div className="md:col-span-5">
                     {isActive ? (
-                      <div className="flex items-center gap-2 animate-pulse text-orange-500 font-bold">
+                      <div
+                        className={`flex items-center gap-2 animate-pulse ${accentText} font-bold`}
+                      >
                         <Keyboard className="w-5 h-5" />
                         Press new keys...
                       </div>
@@ -259,7 +310,7 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
                     {isActive ? (
                       <button
                         onClick={() => setEditingKey(null)}
-                        className="p-3 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+                        className={`p-3 rounded-xl ${accentBg} ${accentColor === "orange" ? "text-black" : "text-white"} hover:brightness-110 transition-all`}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -273,7 +324,7 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
                             : "hover:bg-gray-200 text-gray-400 hover:text-black"
                         }`}
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Keyboard className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -288,7 +339,9 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
             <div
               className={`p-8 rounded-3xl max-w-sm w-full text-center border shadow-2xl ${bgCard}`}
             >
-              <Keyboard className="w-12 h-12 mx-auto mb-4 text-orange-500 animate-bounce" />
+              <Keyboard
+                className={`w-12 h-12 mx-auto mb-4 ${accentText} animate-bounce`}
+              />
               <h3 className="text-xl font-bold mb-2">Listening for input...</h3>
               <p className="opacity-60 mb-6">
                 Press the key combination you want to assign to{" "}
@@ -307,3 +360,5 @@ export const ShortcutsView: React.FC<ShortcutsViewProps> = ({
     </div>
   );
 };
+
+export default ShortcutsView;

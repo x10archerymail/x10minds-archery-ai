@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Bug, Send, CheckCircle } from "lucide-react";
 import { reportBugToFirebase } from "../services/firebase";
 
@@ -32,10 +32,15 @@ const ReportBug: React.FC<ReportBugProps> = ({
   const inputBorder = isDark ? "border-neutral-800" : "border-gray-300";
 
   const accentClasses: Record<string, string> = {
-    orange: "from-orange-600 to-red-600 border-orange-500 ring-orange-500",
+    orange: "from-[#FFD700] to-[#FDB931] border-[#FFD700] ring-[#FFD700]",
     blue: "from-blue-600 to-indigo-600 border-blue-500 ring-blue-500",
     green: "from-green-600 to-emerald-600 border-green-500 ring-green-500",
     purple: "from-purple-600 to-pink-600 border-purple-500 ring-purple-500",
+    red: "from-red-600 to-orange-600 border-red-500 ring-red-500",
+    pink: "from-pink-600 to-rose-600 border-pink-500 ring-pink-500",
+    teal: "from-teal-600 to-cyan-600 border-teal-500 ring-teal-500",
+    cyan: "from-cyan-600 to-blue-600 border-cyan-500 ring-cyan-500",
+    indigo: "from-indigo-600 to-purple-600 border-indigo-500 ring-indigo-500",
   };
 
   const currentAccent = accentClasses[accentColor] || accentClasses.orange;
@@ -142,8 +147,8 @@ const ReportBug: React.FC<ReportBugProps> = ({
                     ? "bg-neutral-800 text-neutral-500"
                     : "bg-gray-200 text-gray-400"
                   : isDark
-                  ? "bg-white text-black hover:bg-neutral-200"
-                  : `bg-gradient-to-r ${accentGradient} text-white shadow-lg`
+                    ? "bg-white text-black hover:bg-neutral-200"
+                    : `bg-gradient-to-r ${accentGradient} text-white shadow-lg`
               }
             `}
           >

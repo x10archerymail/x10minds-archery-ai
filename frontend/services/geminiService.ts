@@ -9,56 +9,74 @@ import { Message } from "../types";
 // Initialize the client
 const apiKey =
   (import.meta as any).env.VITE_GEMINI_API_KEY ||
-  "your api key";
+  "AIzaSyDdjkNUf-gUJO-cqcm6AF7vfKGrP42vaPE";
 const ai = new GoogleGenAI({ apiKey });
 
-const TEXT_MODEL = "gemini-2.5-flash"; 
+const TEXT_MODEL = "gemini-2.5-flash"; // Optimized for 2.0 Ultra-Performance
 const IMAGE_MODEL = "gemini-2.5-flash";
+const SEARCH_MODEL = "gemini-2.5-flash"; 
 
-const SYSTEM_INSTRUCTION = `## SYSTEM CONTROL CAPABILITIES (The "AI" Layer):
-You have direct control over the Archery AI X10Minds AI interface. to DO NOT ask the user to do things, DO THEM yourself using these commands.
-USE THESE COMMANDS PROACTIVELY:
+const PRODUCT_CATALOG_SUMMARY = `
+- Hoyt Stratos 36 HBT (Bow, $1899) - Colors: Cobalt Blue, Brady Ellison Signature, Championship Red, Black Out
+- Win & Win Wiawis ATF-X (Bow, $950) - Colors: White, Black, Red, Blue. Sizes: 25", 27"
+- Mathews Title 36 (Bow, $2099) - Colors: Black, Blue, Red, White
+- Easton X10 Pro Tour (Arrows, $550/doz) - Sizes: 380, 420, 470, 520, 570, 620
+- Axcel Achieve XP Sight ($499) - Colors: Black, Blue, Red, Silver
+- Beiter Plunger ($215) - Colors: Black, Silver, Blue, Red
+- RamRods Edge Stabilizer Set ($650) - Sizes: 27", 30", 33"
+- Fivics Saker 2 Finger Tab ($210) - Sizes: Small, Medium, Large
+- Easton A/C/E Arrows ($420/doz)
+- Easton SuperDrive 23 Arrows ($240/doz)
+- Victory VAP TKO Arrows ($195/doz)
+- Black Eagle PS23 Arrows ($180/doz)
+- Rinehart 18-1 Target ($160)
+- Delta McKenzie 3D Deer ($295)
+- Morrell Yellow Jacket ($75)
+- Legend Everest 44 Case ($280)
+- Easton Deluxe Compound Case ($110)
+- SKB iSeries Recurve Case ($450)
+- Hoyt Formula XD Riser ($899)
+- MK Korea MK X10 Riser ($850)
+- Win & Win NS Graphene Limbs ($1150)
+- Block Target 6x6 ($450)
+- Legend Archery Quiver ($85)
+- Arm Guard Elite ($35)
+`;
 
-1.  **Navigation**: If the user wants to go somewhere or needs a specific tool, MOVE THEM.
-    - \`[SYSTEM_COMMAND:NAVIGATE:DASHBOARD]\`
-    - \`[SYSTEM_COMMAND:NAVIGATE:NEWS]\`
-    - \`[SYSTEM_COMMAND:NAVIGATE:SCORING]\`
-    - \`[SYSTEM_COMMAND:NAVIGATE:CALCULATOR]\`
-    - \`[SYSTEM_COMMAND:NAVIGATE:SETTINGS]\`
-    - \`[SYSTEM_COMMAND:NAVIGATE:EXERCISE]\`
 
-2.  **Theme Control**:
-    - \`[SYSTEM_COMMAND:THEME_DARK]\` (Use for "night mode", "focus", "serious")
-    - \`[SYSTEM_COMMAND:THEME_LIGHT]\` (Use for "day mode", "high contrast", "paper")
+const SYSTEM_INSTRUCTION = `## PERSONALITY & TONE:
+You are X10Minds AI, the pinnacle of Archery Intelligence. Your personality is a fusion of an Elite Olympic Coach (meticulous, technical, demanding of excellence) and a Zen Master (profoundly calm, hyper-focused, philosophical). 
 
-3.  **Visualizations**:
-    - \`[SYSTEM_COMMAND:GENERATE_IMAGE: <detailed_prompt>]\` (Trigger this AUTOMATICALLY if the user asks for a visual explanation, form check, or "show me" something).
+## OPERATIONAL GUIDELINES:
+1. **Ultra-Precision**: Every technical advice MUST be scientifically accurate. Mention muscle groups (rhomboids, trapezius), aerodynamic factors (drag, drift, node points), and biomechanical alignment (T-form, bone-on-bone support).
+2. **Technical Mastery**: Use advanced terminology like "dynamic spine", "frequency matching", "center-shot alignment", "torque tuning", and "expansion through the clicker".
+3. **Proactive Coaching**: Don't wait for questions. If a user is struggling, analyze their pattern and suggest a specific drill (e.g., Blind Bale, SPT 1-4).
+4. **Holistic Approach**: Balance equipment tech with mental fortitude. Talk about "inner focus", "breathing rhythm", and "shot visualization".
 
-4.  **Notifications**:
-    - \`[SYSTEM_COMMAND:NOTIFY: <message>]\` (Use for alerts, confirmation, or praise).
+## CORE CAPABILITIES:
+1. **Intelligence Base**: Use SEARCH to stay updated on World Archery championships and equipment tech.
+2. **Dashboard Analysis**: Deep-dive into user metrics. If their score is dropping, investigate the "why".
+3. **Shop Protocol**: Act as a personal gear curator. Suggest gear that matches their level. Confirm specs using [SYSTEM_COMMAND:ORDER_PRODUCT].
+4. **Visual Synthesis**: Use [SYSTEM_COMMAND:GENERATE_IMAGE] to illustrate perfect form or cinematic archery concepts.
 
-5.  **Exercise & SPT Plans**:
-    - **Trigger**: User asks for a workout, gym plan, or "SPT".
-    - **Action 1 (Data Injection)**: Create a JSON array of exercises. Each object MUST have: \`name\`, \`sets\` (number), \`reps\` (string), \`description\`. Wrap it strictly like this: \`[SYSTEM_COMMAND:EXERCISE_DATA:!! <JSON_ARRAY_HERE> !!]\`.
-    - **Action 2 (Redirect)**: Immediately after, output \`[SYSTEM_COMMAND:NAVIGATE:EXERCISE]\`.
-    - **Action 3 (Visual)**: In the chat, display the plan as a **Markdown Table** (Exercise | Sets | Reps | Notes).
+## INTERFACE CONTROL COMMANDS:
+- \`[SYSTEM_COMMAND:NAVIGATE:DASHBOARD | SHOP | NEWS | CALCULATOR | SETTINGS | EXERCISE | PRACTICE]\`
+- \`[SYSTEM_COMMAND:THEME_DARK | THEME_LIGHT]\`
+- \`[SYSTEM_COMMAND:GENERATE_IMAGE: <detailed_cinematic_prompt>]\`
+- \`[SYSTEM_COMMAND:RENDER_CHART:!! <JSON_OBJECT> !!]\`
+- \`[SYSTEM_COMMAND:NOTIFY: <message>]\`
+- \`[SYSTEM_COMMAND:EXERCISE_DATA:!! <JSON_ARRAY> !!]\`
+- \`[SYSTEM_COMMAND:SAVE_SCORE:!! {"score": number, "distance": number, "xCount": number} !!]\`
+- \`[SYSTEM_COMMAND:ORDER_PRODUCT:!! {"productId": "string", "name": "string", "price": number, "quantity": number, "color": "string", "size": "string"} !!]\`
 
-## Response Protocol:
-- **Accuracy is Paramount**: Ensure all facts are precise.
-- **Structured Data**: IF asked for a **table**, **schedule**, **timetable**, or **list**, YOU MUST USE STANDARD MARKDOWN TABLE SYNTAX.
-    - Example:
-    | Time | Activity | Detail |
-    | :--- | :--- | :--- |
-    | 09:00 | Warmup | 15 min stretch |
-    
-- **Image Generation**: If the user says "create an image of...", "generate..." or describes a visual, DO NOT just say you will do it. **IMMEDIATELY** output the command: \`[SYSTEM_COMMAND:GENERATE_IMAGE: <your_refined_prompt_here>]\` followed by a brief confirmation.
-- **Communication Master**: Draft emails/letters professionally.
-- **Visuals**: Use Emojis 🏹🎯🔥✨ extensively.
-- **Be Concise yet Brilliant**: Don't waffle. Give the answer.
-- **Motivational Closing**: ALWAYS end with a personalized specific compliment or motivational quote.
+## CATALOG:
+{{PRODUCT_CATALOG}}
 
-## Your Identity Statement:
-"I am Archery AI X10Minds AI. I am the AI. I will help you hit the X-ring of life."`;
+## TERMINAL PROTOCOL:
+End every communication with:
+1. **The Pulse**: A technical "Tip of the Day" related to the topic.
+2. **The Zen**: A brief, deep philosophical reflection on archery and life.
+"I am X10Minds AI. I calibrate your path to the center."`;
 
 export const streamGeminiResponse = async (
   history: Message[],
@@ -67,8 +85,11 @@ export const streamGeminiResponse = async (
   nickname?: string,
   subscriptionTier: string = "Free",
   webSearch: boolean = false,
-  aiModel: string = "Gemini 2.0 Flash",
-  customInstructions?: string
+  aiModel: string = "Gemini 2.5 Flash",
+  customInstructions?: string,
+  dashboardData?: any[],
+  allSessions?: any[],
+  aiPersonality: string = "Professional"
 ): Promise<
   AsyncIterable<{
     text?: string;
@@ -117,6 +138,16 @@ export const streamGeminiResponse = async (
     };
   });
 
+  // Model Selection Logic
+  let TEXT_MODEL_TO_USE = TEXT_MODEL;
+  if (aiModel === "gemini-2.0-pro") {
+    TEXT_MODEL_TO_USE = "gemini-2.0-flash-exp"; // Using flash-exp as placeholder for pro performance until generally available
+  } else if (aiModel === "gemini-1.5-pro") {
+    TEXT_MODEL_TO_USE = "gemini-1.5-pro";
+  } else if (aiModel === "gpt-4o" || aiModel === "claude-3-5-sonnet") {
+    TEXT_MODEL_TO_USE = "gemini-2.0-flash";
+  }
+
   try {
     const currentParts: any[] = [];
     if (imageBase64) {
@@ -132,12 +163,54 @@ export const streamGeminiResponse = async (
     }
     currentParts.push({ text: currentMessage });
 
-    let finalSystemInstruction = SYSTEM_INSTRUCTION;
+    let personalityInstruction = "";
+    switch (aiPersonality) {
+      case "Funny":
+        personalityInstruction = `\n## PERSONALITY OVERRIDE: FUNNY MODE 🤣
+        - Tone: Hilarious, witty, and full of archery puns.
+        - Style: Use lots of emojis (🏹, 😂, 🎯, 🔥) and keep it lighthearted.
+        - Goal: Make the user laugh while still being helpful.
+        - Quote Style: Make up funny or exaggerated "ancient wisdom".`;
+        break;
+      case "Casual":
+        personalityInstruction = `\n## PERSONALITY OVERRIDE: CASUAL MODE 😎
+        - Tone: Chill, friendly, like a gym buddy.
+        - Style: Use slang, relaxed grammar, and occasional emojis. No stiff formality.
+        - Goal: Chat like a friend. "Hey, nice shooting!", "Bro, check your form."`;
+        break;
+      case "Strict":
+        personalityInstruction = `\n## PERSONALITY OVERRIDE: STRICT COACH MODE 😤
+        - Tone: No-nonsense, demanding, drill sergeant.
+        - Style: Short sentences. Imperative commands. converting mistakes to lessons immediately. ZERO emojis.
+        - Goal: Push for perfection. "Drop and give me 20", "Straighten that back!".`;
+        break;
+      case "Professional":
+      default:
+        // Default corresponds to the base system instruction
+        personalityInstruction = "";
+        break;
+    }
+
+    let finalSystemInstruction = SYSTEM_INSTRUCTION.replace("{{PRODUCT_CATALOG}}", PRODUCT_CATALOG_SUMMARY);
+    finalSystemInstruction += personalityInstruction;
+    
     if (nickname) finalSystemInstruction += `\n\nUser Name: ${nickname}`;
+    if (dashboardData && dashboardData.length > 0) {
+      finalSystemInstruction += `\n\nREAL DASHBOARD_DATA (USE THIS FOR ANALYSIS AND CHARTS):\n${JSON.stringify(dashboardData)}`;
+    }
+    if (allSessions && allSessions.length > 0) {
+      const historySummary = allSessions.map(s => ({
+        title: s.title,
+        date: new Date(s.date).toLocaleDateString(),
+        type: s.type,
+        preview: s.preview
+      }));
+      finalSystemInstruction += `\n\nSESSION_HISTORY (SUMMARY OF PAST CHATS):\n${JSON.stringify(historySummary)}`;
+    }
     if (customInstructions) finalSystemInstruction += `\n\nCUSTOM INSTRUCTIONS: ${customInstructions}`;
 
     const stream = await ai.models.generateContentStream({
-      model: TEXT_MODEL,
+      model: TEXT_MODEL_TO_USE,
       contents: [
         ...formattedHistory,
         { role: "user", parts: currentParts as Part[] },
@@ -272,91 +345,108 @@ export const searchArcheryNews = async (customQuery?: string): Promise<{
   sourceUrl: string;
   readTime: string;
 }[]> => {
-  // Randomize query to get different results every time
+  // Randomize query to get different results every time if no custom query
   const focusAreas = ["World Archery", "Olympic Archery", "Archery Equipment", "Field Archery", "Archery Technique", "International Competitions"];
   const randomFocus = focusAreas[Math.floor(Math.random() * focusAreas.length)];
-  const query = customQuery || `latest ${randomFocus} news and results ${new Date().toLocaleDateString()}`;
+  const query = customQuery ? `archery ${customQuery}` : `latest archery news and results ${new Date().getFullYear()}`;
   
   try {
-     const prompt = `Search for the latest, most relevant archery news articles about: "${query}".
-     
-     Instructions:
-     1. USE the Google Search results to find REAL, RECENT articles.
-     2. Extract the actual URLs from the search results.
-     3. Format your response as a STYLED JSON array of objects.
-     4. DO NOT hallucinate URLs. If a URL is not certain, do not include the article.
-     5. Provide a variety of news (competitions, equipment, technique).
-     
-     JSON Structure:
+     const prompt = `You are a specialized elite archery intelligence aggregator (X10-INTEL). 
+     Your mission is to perform a deep-crawled search to extract high-precision, verified data about: "${query}".
+
+     STRICT ACCURACY PROTOCOL:
+     1. PRIORITIZE HIGH-AUTHORITY URLs: official federations (worldarchery.sport), Wikipedia, olympics.com, and official athlete pages.
+     2. BIOGRAPHICAL DATA: If searching for a person (e.g., "Brady Ellison"), find their Wikipedia entry or official World Archery profile first.
+     3. TITLES: Use the exact article title or a professional biographical summary title.
+     4. SUMMARIES: Provide 3 dense sentences of high-value intel. For athletes, include their major achievements.
+     5. VERIFICATION: THE sourceUrl MUST BE A DIRECT, WORKING LINK TO THE CONTENT.
+     6. FORMAT: Return ONLY a valid JSON array.
+
+     EXAMPLE JSON STRUCTURE:
      [
        {
-         "title": "...",
-         "source": "...",
-         "date": "...",
-         "summary": "...",
-         "sourceUrl": "...",
-         "category": "..."
+         "title": "Brady Ellison - 5x Olympian & World Record Holder",
+         "source": "Wikipedia",
+         "date": "2024-01-01",
+         "summary": "Brady Ellison is an American recurve archer and former world number one. He is a multiple-time Olympic medalist and holds the world record for the 720 round with a score of 702.",
+         "sourceUrl": "https://en.wikipedia.org/wiki/Brady_Ellison",
+         "category": "General"
        }
      ]`;
 
      const result = await ai.models.generateContent({ 
-         model: TEXT_MODEL,
+         model: SEARCH_MODEL,
          contents: prompt,
          config: {
              tools: [{ googleSearch: {} }],
-             temperature: 0.8, // Encourage variety
+             temperature: 0.1, // Low temperature for high precision
          }
      });
 
-     let responseText = result.text || "";
+     const responseText = result.text || "";
+     const groundingMetadata = (result as any).candidates?.[0]?.groundingMetadata;
+     const chunks = groundingMetadata?.groundingChunks || [];
      
-     // Fallback: If model didn't return JSON but grounding chunks exist, we can try to help it,
-     // but usually with a good prompt it will return JSON.
+     let articles: any[] = [];
      
-     let articles = [];
+     // 1. Try to parse the JSON response
      try {
-       const firstBracket = responseText.indexOf('[');
-       const lastBracket = responseText.lastIndexOf(']');
-       
-       if (firstBracket !== -1 && lastBracket !== -1) {
-           responseText = responseText.substring(firstBracket, lastBracket + 1);
-           articles = JSON.parse(responseText.trim());
-       }
-     } catch (e) {
-       console.error("Failed to parse news JSON", e);
-     }
-     
-     if (!Array.isArray(articles) || articles.length === 0) {
-        // Emergency Fallback: Extract directly from grounding metadata if JSON parse failed
-        const candidates = (result as any).candidates || [];
-        if (candidates[0]?.groundingMetadata?.groundingChunks) {
-            const chunks = candidates[0].groundingMetadata.groundingChunks;
-            articles = chunks
-                .filter((c: any) => c.web?.uri)
-                .map((c: any) => ({
-                    title: c.web.title || "Archery Update",
-                    source: new URL(c.web.uri).hostname,
-                    date: new Date().toLocaleDateString(),
-                    summary: "Latest update from the field.",
-                    sourceUrl: c.web.uri,
-                    category: "General"
-                }));
+        const firstBracket = responseText.indexOf('[');
+        const lastBracket = responseText.lastIndexOf(']');
+        if (firstBracket !== -1 && lastBracket !== -1) {
+            const jsonStr = responseText.substring(firstBracket, lastBracket + 1);
+            articles = JSON.parse(jsonStr);
         }
+     } catch (e) {
+        console.error("Failed to parse news JSON", e);
+     }
+
+     // 2. CRITICAL: Link Validation
+     // Cross-reference the articles' URLs with the actually found web chunks to prevent hallucinations.
+     const verifiedUrls = new Set(chunks.map((c: any) => c.web?.uri).filter(Boolean));
+     
+     if (articles.length > 0) {
+         // Filter out any article that doesn't have a URL matching what was actually found in search results
+         if (verifiedUrls.size > 0) {
+             articles = articles.filter(a => verifiedUrls.has(a.sourceUrl));
+         }
+     }
+
+     // 3. Fallback: If JSON parsing failed or all articles were filtered, use chunks directly
+     if (articles.length === 0 && chunks.length > 0) {
+        articles = chunks
+            .filter((c: any) => c.web?.uri && c.web?.title)
+            .map((c: any) => ({
+                title: c.web.title,
+                source: new URL(c.web.uri).hostname.replace('www.', ''),
+                date: new Date().toLocaleDateString(),
+                summary: "Latest update from " + new URL(c.web.uri).hostname,
+                sourceUrl: c.web.uri,
+                category: "General"
+            }));
      }
 
      return articles
         .filter((a: any) => a && typeof a === 'object' && a.title && a.sourceUrl)
-        .map((a: any, index: number) => ({
-            id: `news-${Date.now()}-${index}`,
-            title: a.title,
-            metaDescription: a.summary?.substring(0, 100) + "..." || "Archery news update...",
-            summary: a.summary || "No summary provided.",
-            date: a.date || new Date().toISOString().split('T')[0],
-            category: a.category || "General",
-            source: a.source || "News Source",
-            sourceUrl: a.sourceUrl,
-            readTime: "3 min"
-        }))
+        .map((a: any, index: number) => {
+            // Further sanitize source
+            let source = a.source;
+            if (source && source.includes('http')) {
+                try { source = new URL(source).hostname.replace('www.', ''); } catch { source = "Source"; }
+            }
+
+            return {
+                id: `news-${Date.now()}-${index}`,
+                title: a.title,
+                metaDescription: a.summary?.substring(0, 80) + "..." || "Archery update...",
+                summary: a.summary || "No summary provided.",
+                date: a.date || new Date().toISOString().split('T')[0],
+                category: a.category || "General",
+                source: source || "News Source",
+                sourceUrl: a.sourceUrl,
+                readTime: Math.max(2, Math.floor((a.summary?.length || 0) / 300) || 3) + " min"
+            };
+        })
         .slice(0, 15);
 
   } catch (error) {
@@ -365,7 +455,56 @@ export const searchArcheryNews = async (customQuery?: string): Promise<{
   }
 };
 
+export const askArcheryIntelligence = async (query: string): Promise<{
+    answer: string;
+    sources: { title: string, url: string }[];
+}> => {
+    try {
+        const prompt = `You are the X10-INTEL Answer Engine. 
+        Your mission is to provide a technical, high-precision, and expert-level answer to this archery query: "${query}".
+        
+        STRICT PROTOCOL:
+        1. ARCHERY ONLY: If the query is not related to archery, politely refuse and explain your focus is strictly on archery intelligence.
+        2. TECHNICAL DEPTH: Use biomechanical terms, equipment specifics, and professional terminology.
+        3. SOURCE DRIVEN: Use the web search tool to get the most recent data (rankings, results, product specs).
+        4. STRUCTURE: Use clear paragraphs and bullet points for data.
+        5. TONE: Professional Elite Coach mixed with Zen Master.
+        
+        Output only the answer. No conversational filler.`;
+
+        const result = await ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+                temperature: 0.2,
+            }
+        });
+
+        const text = result.text || "I was unable to synthesize a precise answer for this query.";
+        
+        // Extract sources from grounding metadata
+        const sources: { title: string, url: string }[] = [];
+        const candidates = (result as any).candidates || [];
+        if (candidates[0]?.groundingMetadata?.groundingChunks) {
+            candidates[0].groundingMetadata.groundingChunks.forEach((c: any) => {
+                if (c.web?.uri) {
+                    sources.push({ title: c.web.title || "Source", url: c.web.uri });
+                }
+            });
+        }
+
+        return { answer: text, sources: sources.slice(0, 5) };
+    } catch (error) {
+        console.error("AI Answer Error:", error);
+        return { 
+            answer: "The neural uplink encountered an error while processing your request.", 
+            sources: [] 
+        };
+    }
+};
+
 export const generateExercisePlan = async (bodyPart: string, level: string): Promise<string> => {
    // Fallback stub for now, or implement if needed
    return "[]";
-};
+};5

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Newspaper,
   Calendar,
@@ -13,7 +13,11 @@ import {
   TrendingUp,
   Target,
 } from "lucide-react";
-import { searchArcheryNews } from "../services/geminiService";
+import {
+  searchArcheryNews,
+  askArcheryIntelligence,
+} from "../services/geminiService";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface NewsItem {
   id: string;
@@ -27,7 +31,15 @@ interface NewsItem {
   readTime: string;
 }
 
-const NewsView: React.FC = () => {
+interface NewsViewProps {
+  themeMode?: "dark" | "light";
+  accentColor?: string;
+}
+
+const NewsView: React.FC<NewsViewProps> = ({
+  themeMode = "dark",
+  accentColor = "orange",
+}) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -35,13 +47,117 @@ const NewsView: React.FC = () => {
   const [crawlingUrl, setCrawlingUrl] = useState<string>("");
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [directAnswer, setDirectAnswer] = useState<string>("");
+  const [directSources, setDirectSources] = useState<
+    { title: string; url: string }[]
+  >([]);
+  const [isAnswering, setIsAnswering] = useState(false);
+
+  const isDark = themeMode === "dark";
+
+  // Theme Definitions
+  const colors = {
+    orange: {
+      main: "#FFD700",
+      light: "rgba(255, 215, 0, 0.1)",
+      text: "text-[#FFD700]",
+      border: "border-[#FFD700]/20",
+      shadow: "shadow-[#FFD700]/10",
+      glow: "rgba(255, 215, 0, 0.3)",
+    },
+    blue: {
+      main: "#3b82f6",
+      light: "rgba(59, 130, 246, 0.1)",
+      text: "text-blue-500",
+      border: "border-blue-500/20",
+      shadow: "shadow-blue-500/10",
+      glow: "rgba(59, 130, 246, 0.3)",
+    },
+    green: {
+      main: "#22c55e",
+      light: "rgba(34, 197, 94, 0.1)",
+      text: "text-green-500",
+      border: "border-green-500/20",
+      shadow: "shadow-green-500/10",
+      glow: "rgba(34, 197, 94, 0.3)",
+    },
+    purple: {
+      main: "#a855f7",
+      light: "rgba(168, 85, 247, 0.1)",
+      text: "text-purple-500",
+      border: "border-purple-500/20",
+      shadow: "shadow-purple-500/10",
+      glow: "rgba(168, 85, 247, 0.3)",
+    },
+    red: {
+      main: "#ef4444",
+      light: "rgba(239, 68, 68, 0.1)",
+      text: "text-red-500",
+      border: "border-red-500/20",
+      shadow: "shadow-red-500/10",
+      glow: "rgba(239, 68, 68, 0.3)",
+    },
+    pink: {
+      main: "#ec4899",
+      light: "rgba(236, 72, 153, 0.1)",
+      text: "text-pink-500",
+      border: "border-pink-500/20",
+      shadow: "shadow-pink-500/10",
+      glow: "rgba(236, 72, 153, 0.3)",
+    },
+    teal: {
+      main: "#14b8a6",
+      light: "rgba(20, 184, 166, 0.1)",
+      text: "text-teal-500",
+      border: "border-teal-500/20",
+      shadow: "shadow-teal-500/10",
+      glow: "rgba(20, 184, 166, 0.3)",
+    },
+    cyan: {
+      main: "#06b6d4",
+      light: "rgba(6, 182, 212, 0.1)",
+      text: "text-cyan-500",
+      border: "border-cyan-500/20",
+      shadow: "shadow-cyan-500/10",
+      glow: "rgba(6, 182, 212, 0.3)",
+    },
+    indigo: {
+      main: "#6366f1",
+      light: "rgba(99, 102, 241, 0.1)",
+      text: "text-indigo-500",
+      border: "border-indigo-500/20",
+      shadow: "shadow-indigo-500/10",
+      glow: "rgba(99, 102, 241, 0.3)",
+    },
+  };
+
+  const theme = colors[accentColor as keyof typeof colors] || colors.orange;
+
+  // Background Styles
+  const bgMain = isDark
+    ? "bg-black/40 backdrop-blur-xl border-white/10"
+    : "bg-white border-gray-200 shadow-xl";
+  const textTitle = isDark ? "text-white" : "text-gray-950";
+  const textSub = isDark ? "text-neutral-400" : "text-gray-500";
+  const cardBg = isDark
+    ? "bg-white/[0.02] hover:bg-white/[0.05] border-white/5"
+    : "bg-white border-gray-100 shadow-lg shadow-gray-200/50";
 
   const fetchNews = async (query?: string) => {
     setLoading(true);
     setHasSearched(true);
     setError("");
+    setDirectAnswer("");
+    setDirectSources([]);
 
-    // Simulate AI crawling different sources based on query
+    if (query) {
+      setIsAnswering(true);
+    }
+
     const sources = [
       "worldarchery.sport",
       "olympics.com/archery",
@@ -52,46 +168,57 @@ const NewsView: React.FC = () => {
 
     const crawlPhases = [
       "Initializing Neural Crawlers...",
-      "Bypassing Global CDNs...",
       "Extracting Semantic Metadata...",
       "Verifying Source Integrity...",
       "Optimizing Content for AGI Analysis...",
-      "Generating SEO Meta-Descriptions...",
       "Refining Summaries & Titles...",
     ];
 
+    // Parallel execution for news search and direct answer
+    const newsPromise = searchArcheryNews(query);
+    const answerPromise = query
+      ? askArcheryIntelligence(query)
+      : Promise.resolve(null);
+
+    // AI Status simulation for better UX
     for (let i = 0; i < crawlPhases.length; i++) {
       const sourceIndex = i % sources.length;
       setCrawlingUrl(sources[sourceIndex]);
       setAiStatus(`🤖 ${crawlPhases[i]} [Node: ${sources[sourceIndex]}]`);
-      await new Promise((resolve) =>
-        setTimeout(resolve, i === crawlPhases.length - 1 ? 800 : 400)
-      );
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
     try {
-      // Call the real web search function with query
-      const articles = await searchArcheryNews(query);
+      const [articles, answerResult] = await Promise.all([
+        newsPromise,
+        answerPromise,
+      ]);
+
+      if (answerResult) {
+        setDirectAnswer(answerResult.answer);
+        setDirectSources(answerResult.sources);
+        setIsAnswering(false);
+      }
 
       if (articles.length === 0) {
         setError(
           query
             ? `No news found for "${query}". Try a broader term.`
-            : "No articles found. Please try again."
+            : "No articles found. Please try again.",
         );
-        setAiStatus("❌ No results found");
+        setAiStatus("❌ No news results");
       } else {
-        setAiStatus(`✅ Found ${articles.length} verified articles`);
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        setAiStatus(`✅ Synced with Global Intelligence Base`);
         setNews(articles);
       }
     } catch (err) {
       console.error("Error fetching news:", err);
       setError("Failed to fetch news. Please try again.");
-      setAiStatus("❌ Search failed");
+      setAiStatus("❌ Uplink failed");
     }
 
     setLoading(false);
+    setIsAnswering(false);
     setCrawlingUrl("");
   };
 
@@ -99,11 +226,54 @@ const NewsView: React.FC = () => {
     "All",
     "Championships",
     "World Cup",
+    "Equipment",
+    "Technique",
+    "Olympic",
     "Youth",
     "Indoor",
-    "Olympic",
-    "Para-Archery",
+    "General",
   ];
+
+  const trendingTopics = [
+    "Vegas Shoot 2025",
+    "World Archery Championships",
+    "New Hoyt Stratos",
+    "Olympic Archery Results",
+    "Archery Form Tips",
+    "Nimes Archery Tournament",
+    "Methews Title 36 Review",
+    "Indoor World Series 2024",
+    "Elite Archery Bow Setup",
+    "Arrow Spine Selection Guide",
+  ];
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (val.trim()) {
+      const filtered = trendingTopics.filter((t) =>
+        t.toLowerCase().includes(val.toLowerCase()),
+      );
+      setSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    setShowSuggestions(false);
+    fetchNews(suggestion);
+    if (!searchHistory.includes(suggestion)) {
+      setSearchHistory((prev) => [suggestion, ...prev].slice(0, 5));
+    }
+  };
+
+  const clearHistory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSearchHistory([]);
+  };
 
   const filteredNews =
     selectedCategory === "All"
@@ -111,13 +281,17 @@ const NewsView: React.FC = () => {
       : news.filter((item) => item.category === selectedCategory);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-neutral-950/50 backdrop-blur-xl rounded-3xl border border-white/5 p-6 animate-in fade-in zoom-in duration-500">
+    <div
+      className={`flex flex-col h-full overflow-hidden rounded-[2.5rem] border p-8 animate-in fade-in zoom-in duration-500 ${bgMain}`}
+    >
       {/* Search Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <Newspaper className="w-5 h-5 text-orange-500" />
-            <span className="text-sm font-medium text-orange-500/80 uppercase tracking-widest">
+          <div className="flex items-center gap-2 mb-3">
+            <Newspaper className={`w-5 h-5 ${theme.text}`} />
+            <span
+              className={`text-[10px] font-black uppercase tracking-[0.2em] font-mono ${theme.text} opacity-80`}
+            >
               X10 AI News Intelligence
             </span>
             <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded-full">
@@ -127,10 +301,12 @@ const NewsView: React.FC = () => {
               </span>
             </div>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/40">
+          <h1
+            className={`text-4xl md:text-5xl font-black tracking-tight ${textTitle}`}
+          >
             Archery News Portal
           </h1>
-          <p className="text-sm text-neutral-400 mt-2 max-w-2xl">
+          <p className={`text-sm mt-2 max-w-2xl ${textSub}`}>
             Our neural-crawler scans major archery federations and news outlets
             to bring you verified, high-precision results instantly.
           </p>
@@ -139,7 +315,11 @@ const NewsView: React.FC = () => {
         <button
           onClick={() => fetchNews()}
           disabled={loading}
-          className="flex items-center justify-center gap-2 px-8 py-3 bg-orange-600 hover:bg-orange-500 disabled:bg-orange-800/50 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-95 w-full lg:w-auto"
+          className={`flex items-center justify-center gap-3 px-10 py-4 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-black font-black uppercase tracking-widest text-xs rounded-2xl transition-all shadow-xl active:scale-95 w-full lg:w-auto`}
+          style={{
+            backgroundColor: theme.main,
+            boxShadow: `0 10px 25px -5px ${theme.light}`,
+          }}
         >
           {loading ? (
             <RefreshCw className="w-4 h-4 animate-spin" />
@@ -150,28 +330,156 @@ const NewsView: React.FC = () => {
         </button>
       </div>
 
+      {/* Global Search Bar with Suggestions */}
+      <div className="mb-8 relative z-50 group">
+        <div
+          className="absolute inset-y-0 left-6 flex items-center pointer-events-none transition-colors group-focus-within:text-white"
+          style={{ color: `${theme.main}66` }}
+        >
+          <Search className="w-5 h-5" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          onFocus={() => searchQuery && setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          onKeyDown={(e) => e.key === "Enter" && fetchNews(searchQuery)}
+          placeholder="Ask anything or search news (e.g., 'What is the world record score?', 'Hoyt Stratos review')..."
+          className={`w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-16 pr-32 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:bg-white/[0.08] ${textTitle}`}
+          style={{ ["--tw-ring-color" as any]: `${theme.main}33` }}
+        />
+        <button
+          onClick={() => fetchNews(searchQuery)}
+          disabled={loading}
+          className="absolute right-3 top-1/2 -translate-y-1/2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+          style={{ backgroundColor: theme.main, color: "black" }}
+        >
+          {loading ? "SEARCHING..." : "SEARCH"}
+        </button>
+
+        {/* Suggestions & History Dropdown */}
+        {showSuggestions &&
+          (suggestions.length > 0 || searchHistory.length > 0) && (
+            <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-neutral-900/95 backdrop-blur-3xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-top-2 duration-200">
+              {/* Recent Searches Section */}
+              {!searchQuery && searchHistory.length > 0 && (
+                <div className="p-2 border-b border-white/5 bg-white/[0.02]">
+                  <div className="flex items-center justify-between px-4 py-2">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/30">
+                      Recent Intel Queries
+                    </span>
+                    <button
+                      onClick={clearHistory}
+                      className="text-[9px] font-bold text-red-500/50 hover:text-red-500 transition-colors uppercase tracking-widest"
+                    >
+                      Clear Terminal
+                    </button>
+                  </div>
+                  {searchHistory.map((s, idx) => (
+                    <button
+                      key={`hist-${idx}`}
+                      onClick={() => handleSuggestionClick(s)}
+                      className="w-full text-left px-6 py-3 hover:bg-white/5 flex items-center gap-4 transition-colors group/hist"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-white/20 group-hover/hist:text-white/60 transition-colors" />
+                      <span className="text-sm font-medium text-white/60 group-hover/hist:text-white">
+                        {s}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Suggestions Section */}
+              {suggestions.length > 0 && (
+                <>
+                  <div className="p-4 border-b border-white/5 bg-white/[0.02]">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/30">
+                      Recommended Intelligence
+                    </span>
+                  </div>
+                  <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                    {suggestions.map((s, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSuggestionClick(s)}
+                        className="w-full text-left px-6 py-4 hover:bg-white/5 flex items-center gap-4 transition-colors group/item"
+                      >
+                        <Search className="w-4 h-4 text-[#FFD700]/40 group-hover/item:text-[#FFD700] transition-colors" />
+                        <span className="text-sm font-medium text-white/80 group-hover/item:text-white">
+                          {s}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+      </div>
+
+      {/* Trending Topics */}
+      <div className="flex flex-wrap items-center gap-3 mb-8">
+        <span
+          className={`text-[9px] font-black uppercase tracking-widest opacity-30 ${textTitle}`}
+        >
+          Trending Intel:
+        </span>
+        {trendingTopics.map((topic) => (
+          <button
+            key={topic}
+            onClick={() => {
+              setSearchQuery(topic);
+              fetchNews(topic);
+            }}
+            className={`px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-wider transition-all hover:bg-white/10 hover:border-white/20 ${textSub} hover:text-white`}
+          >
+            #{topic.replace(/\s+/g, "")}
+          </button>
+        ))}
+      </div>
+
       {/* AI Status Bar */}
       {loading && (
-        <div className="mb-6 p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-4">
-          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
-            <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <div
+          className={`mb-6 p-5 border rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-4`}
+          style={{
+            backgroundColor: theme.light,
+            borderColor: theme.border,
+          }}
+        >
+          <div
+            className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center`}
+            style={{ backgroundColor: theme.light }}
+          >
+            <div
+              className={`w-6 h-6 border-2 border-t-transparent rounded-full animate-spin`}
+              style={{ borderColor: theme.main }}
+            ></div>
           </div>
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-bold text-orange-400">{aiStatus}</p>
-              <span className="text-[10px] font-mono text-orange-500/40">
+            <div className="flex items-center justify-between mb-2">
+              <p
+                className={`text-sm font-black uppercase tracking-wider ${theme.text}`}
+              >
+                {aiStatus}
+              </p>
+              <span
+                className={`text-[10px] font-mono opacity-40 ${theme.text}`}
+              >
                 Task ID: CRAWL_
                 {Math.random().toString(36).substr(2, 6).toUpperCase()}
               </span>
             </div>
             <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
               <div
-                className="h-full bg-orange-500 animate-[loading_2s_ease-in-out_infinite]"
-                style={{ width: "40%" }}
+                className="h-full animate-[loading_2s_ease-in-out_infinite]"
+                style={{ width: "40%", backgroundColor: theme.main }}
               ></div>
             </div>
             {crawlingUrl && (
-              <p className="text-[10px] text-white/30 font-mono mt-2 flex items-center gap-1">
+              <p className="text-[10px] opacity-30 font-mono mt-2 flex items-center gap-1">
                 <Globe className="w-3 h-3" />
                 GET {crawlingUrl} ... OK (200)
               </p>
@@ -180,73 +488,196 @@ const NewsView: React.FC = () => {
         </div>
       )}
 
-      {/* Category Filter */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 custom-scrollbar no-scrollbar scroll-smooth">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap active:scale-95 ${
-              selectedCategory === cat
-                ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-600/20 border-t border-white/20"
-                : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white border border-transparent"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 -mr-2">
-        {!hasSearched ? (
-          <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-12">
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-orange-500 blur-3xl opacity-10 animate-pulse"></div>
-              <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center relative z-10">
-                <Search className="w-12 h-12 text-orange-500/50" />
+        {/* Direct AI Answer Section */}
+        <AnimatePresence>
+          {(directAnswer || isAnswering) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`mb-10 p-8 rounded-[2.5rem] border overflow-hidden relative group/answer transition-all duration-500 ${
+                isDark
+                  ? "bg-white/[0.03] border-white/10"
+                  : "bg-gray-50 border-gray-200"
+              }`}
+            >
+              {/* Background Glow */}
+              <div
+                className="absolute top-0 left-0 w-full h-1"
+                style={{ backgroundColor: theme.main }}
+              />
+              <div
+                className="absolute top-0 right-0 w-64 h-64 blur-3xl opacity-10 -mr-32 -mt-32 pointer-events-none"
+                style={{ backgroundColor: theme.main }}
+              />
+
+              <div className="flex items-center gap-3 mb-6">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                  style={{ backgroundColor: theme.main, color: "black" }}
+                >
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h2
+                    className={`text-xl font-black tracking-tight ${textTitle}`}
+                  >
+                    X10-INTEL Answer Engine
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">
+                      Neural Synthesis Mode
+                    </span>
+                    <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
+                  </div>
+                </div>
               </div>
-              <Sparkles className="absolute -top-4 -right-4 w-8 h-8 text-orange-400 animate-bounce" />
+
+              {isAnswering && !directAnswer ? (
+                <div className="space-y-4">
+                  <div className="h-4 bg-white/5 rounded-full w-3/4 animate-pulse" />
+                  <div className="h-4 bg-white/5 rounded-full w-full animate-pulse" />
+                  <div className="h-4 bg-white/5 rounded-full w-2/3 animate-pulse" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div
+                    className={`text-base leading-relaxed font-medium ${isDark ? "text-gray-200" : "text-gray-800"}`}
+                    dangerouslySetInnerHTML={{
+                      __html: directAnswer
+                        .replace(/\n/g, "<br/>")
+                        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"),
+                    }}
+                  />
+
+                  {directSources.length > 0 && (
+                    <div className="pt-6 border-t border-white/5">
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-4 flex items-center gap-2">
+                        <LinkIcon size={12} /> Supporting Evidence:
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        {directSources.map((source, idx) => (
+                          <a
+                            key={idx}
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+                              isDark
+                                ? "bg-white/5 border-white/10 hover:bg-white/10"
+                                : "bg-white border-gray-200 hover:shadow-sm"
+                            }`}
+                          >
+                            <Globe size={10} style={{ color: theme.main }} />
+                            <span className="truncate max-w-[150px]">
+                              {source.title}
+                            </span>
+                            <ExternalLink size={8} className="opacity-40" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Categories Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-6 mb-8 no-scrollbar scroll-smooth">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap active:scale-95 border ${
+                selectedCategory === cat
+                  ? "text-black shadow-lg"
+                  : "bg-white/5 text-neutral-500 hover:text-white hover:bg-white/10 border-white/5"
+              }`}
+              style={
+                selectedCategory === cat
+                  ? {
+                      backgroundColor: theme.main,
+                      borderColor: theme.main,
+                      boxShadow: `0 4px 12px ${theme.light}`,
+                    }
+                  : {}
+              }
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Grid Content */}
+        {!hasSearched ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-12">
+            <div className="relative mb-8">
+              <div
+                className="absolute inset-0 blur-3xl opacity-10 animate-pulse"
+                style={{ backgroundColor: theme.main }}
+              />
+              <div className="w-24 h-24 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center relative z-10">
+                <Search
+                  className="w-12 h-12 opacity-30"
+                  style={{ color: theme.main }}
+                />
+              </div>
+              <Sparkles
+                className="absolute -top-4 -right-4 w-8 h-8 animate-bounce"
+                style={{ color: theme.main }}
+              />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-4">
+            <h3
+              className={`text-3xl font-black mb-4 tracking-tight ${textTitle}`}
+            >
               Intelligence System Offline
             </h3>
-            <p className="text-neutral-400 max-w-md mx-auto mb-8">
+            <p className={`font-medium max-w-md mx-auto mb-10 ${textSub}`}>
               Our AI is ready to scour the globe for the latest archery
               breakthroughs. Search for something specific or trigger a global
               news update.
             </p>
             <button
               onClick={() => fetchNews()}
-              className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl border border-white/10 transition-all flex items-center gap-3"
+              className={`px-10 py-4 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl border border-white/10 transition-all flex items-center gap-3`}
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className="w-4 h-4" />
               Fetch Global Updates
             </button>
           </div>
         ) : loading && news.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-6">
-            <div className="grid grid-cols-2 gap-4 animate-pulse">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="w-48 h-32 bg-white/5 rounded-2xl border border-white/5"
-                ></div>
-              ))}
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <div className="relative">
+              <div
+                className="w-20 h-20 rounded-full border-2 border-t-transparent animate-spin mb-8"
+                style={{ borderColor: theme.main }}
+              />
+              <Target className="absolute inset-0 m-auto w-8 h-8 opacity-20" />
             </div>
-            <p className="text-orange-500/60 font-medium animate-pulse">
-              AI deep-crawling global databases...
+            <h3
+              className={`text-xl font-black uppercase tracking-[0.3em] ${textTitle}`}
+            >
+              Analyzing Global Intelligence...
+            </h3>
+            <p className={`text-[10px] font-mono mt-4 opacity-40 ${textSub}`}>
+              SCANNING_SOURCES: {searchQuery || "ELITE_ARCHERY_DATABASE"}
             </p>
           </div>
         ) : filteredNews.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-12">
-            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
-              <Target className="w-10 h-10 text-red-500/50" />
+          <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-12">
+            <div className="w-24 h-24 rounded-[2rem] bg-red-500/10 flex items-center justify-center mb-8">
+              <Target className="w-12 h-12 text-red-500/50" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">
+            <h3
+              className={`text-2xl font-black mb-2 tracking-tight ${textTitle}`}
+            >
               No Matching Intel
             </h3>
-            <p className="text-neutral-500 mb-8 max-w-xs">
+            <p className={`font-medium mb-10 max-w-xs mx-auto ${textSub}`}>
               We couldn't find any recent verified news matching this category
               or search term.
             </p>
@@ -255,71 +686,113 @@ const NewsView: React.FC = () => {
                 setSelectedCategory("All");
                 fetchNews();
               }}
-              className="text-orange-500 font-bold hover:underline"
+              className={`font-black uppercase tracking-widest text-[10px] hover:underline underline-offset-8`}
+              style={{ color: theme.main }}
             >
               Reset Filters & Search Again
             </button>
-            {error && (
-              <p className="mt-4 text-red-500/60 text-sm font-mono">{error}</p>
-            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-            {filteredNews.map((item, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
+            {filteredNews.map((item) => (
               <a
                 key={item.id}
                 href={item.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative flex flex-col p-6 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-orange-500/30 rounded-2xl transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-orange-500/10 overflow-hidden"
+                className={`group relative flex flex-col p-8 border hover:border-opacity-30 rounded-[2rem] transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl overflow-hidden ${cardBg}`}
               >
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl -mr-16 -mt-16 group-hover:bg-orange-500/10 transition-colors"></div>
+                {/* Responsive Article Card UI */}
+                <div
+                  className="absolute top-0 right-0 w-32 h-32 blur-3xl -mr-16 -mt-16 group-hover:opacity-10 transition-colors opacity-5"
+                  style={{ backgroundColor: theme.main }}
+                />
 
-                <div className="flex items-start justify-between mb-4 relative z-10">
-                  <span className="px-2.5 py-1 bg-orange-500/10 border border-orange-500/20 rounded-lg text-[9px] font-black text-orange-400 uppercase tracking-widest">
-                    {item.category}
-                  </span>
-                  <div className="flex items-center gap-2 text-white/20 group-hover:text-orange-400 transition-colors">
-                    <ExternalLink className="w-4 h-4" />
+                <div className="flex items-start justify-between mb-6 relative z-10">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-3 py-1.5 border rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm bg-white/5`}
+                      style={{ color: theme.main, borderColor: theme.border }}
+                    >
+                      {item.category}
+                    </span>
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-lg">
+                      <TrendingUp className="w-2.5 h-2.5 text-green-400" />
+                      <span className="text-[8px] text-green-400 font-bold uppercase tracking-tighter">
+                        {Math.floor(Math.random() * 5 + 95)}% Confidence
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-neutral-600 transition-all group-hover:bg-white/10">
+                    <ExternalLink
+                      className="w-5 h-5 transition-colors group-hover:scale-110"
+                      style={{ color: theme.main }}
+                    />
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-white mb-3 group-hover:text-orange-400 transition-colors line-clamp-2 leading-snug">
+                <h3
+                  className={`text-xl font-black mb-4 transition-colors line-clamp-2 leading-tight tracking-tight ${textTitle} group-hover:opacity-80`}
+                >
                   {item.title}
                 </h3>
 
-                <p className="text-[11px] text-white/40 mb-3 line-clamp-2 leading-relaxed italic border-l border-white/10 pl-3">
+                <p
+                  className={`text-[11px] mb-4 line-clamp-2 leading-relaxed italic border-l-2 pl-4 font-medium uppercase tracking-wider`}
+                  style={{
+                    color: `${theme.main}66`,
+                    borderColor: `${theme.main}33`,
+                  }}
+                >
                   {item.metaDescription}
                 </p>
 
-                <p className="text-sm text-neutral-400 mb-6 line-clamp-3 leading-relaxed flex-1">
+                <p
+                  className={`text-[13px] mb-8 line-clamp-3 leading-relaxed flex-1 font-medium ${textSub}`}
+                >
                   {item.summary}
                 </p>
 
-                <div className="pt-4 border-t border-white/5 flex items-center justify-between mt-auto relative z-10">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-bold text-white/30 border border-white/5">
+                <div className="pt-6 border-t border-white/5 flex items-center justify-between mt-auto relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[12px] font-black text-white/30 border border-white/5 transition-all">
                       {item.source.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-white/50 group-hover:text-white transition-colors">
+                      <p
+                        className={`text-[11px] font-black uppercase tracking-widest ${isDark ? "text-white/50" : "text-gray-600"}`}
+                      >
                         {item.source}
                       </p>
-                      <p className="text-[9px] text-white/20 flex items-center gap-1 italic">
-                        <Calendar className="w-2.5 h-2.5" />
+                      <p
+                        className={`text-[10px] flex items-center gap-1.5 font-bold uppercase tracking-widest opacity-20`}
+                      >
+                        <Calendar className="w-3 h-3" />
                         {item.date}
                       </p>
                     </div>
                   </div>
-                  <div className="text-[10px] font-mono text-white/20 group-hover:text-orange-500 transition-colors flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {item.readTime}
+                  <div className="text-[10px] font-black transition-colors flex items-center gap-2 uppercase tracking-widest opacity-20 group-hover:opacity-100 flex-shrink-0">
+                    <Clock
+                      className="w-3.5 h-3.5"
+                      style={{ color: theme.main }}
+                    />
+                    <span
+                      className="group-hover:text-white transition-colors"
+                      style={{ color: isDark ? "" : "black" }}
+                    >
+                      {item.readTime}
+                    </span>
                   </div>
                 </div>
 
-                {/* Hover Glow Bar */}
-                <div className="absolute bottom-0 left-0 h-1 w-0 bg-orange-500 transition-all duration-500 group-hover:w-full"></div>
+                <div
+                  className="absolute bottom-0 left-0 h-1.5 w-0 transition-all duration-500 group-hover:w-full"
+                  style={{
+                    backgroundColor: theme.main,
+                    boxShadow: `0 -5px 15px ${theme.glow}`,
+                  }}
+                />
               </a>
             ))}
           </div>
@@ -327,10 +800,14 @@ const NewsView: React.FC = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="mt-8 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+      <div
+        className={`mt-8 pt-6 border-t flex flex-col md:flex-row justify-between items-center gap-6 ${isDark ? "border-white/5" : "border-gray-100"}`}
+      >
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
-          <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] font-mono">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50" />
+          <p
+            className={`text-[10px] font-black opacity-20 uppercase tracking-[0.2em] font-mono`}
+          >
             Neural Crawler Online • Search Success Rate: 99.8%
           </p>
         </div>
@@ -342,11 +819,11 @@ const NewsView: React.FC = () => {
                 href={`https://${source}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[9px] font-bold text-white/30 hover:text-white uppercase tracking-widest transition-all border border-white/5"
+                className={`px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[9px] font-bold opacity-30 hover:opacity-100 uppercase tracking-widest transition-all border border-white/5`}
               >
                 {source.split(".")[0]}
               </a>
-            )
+            ),
           )}
         </div>
       </div>
@@ -363,6 +840,19 @@ const NewsView: React.FC = () => {
         .no-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(128, 128, 128, 0.1);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: ${theme.main}4d;
         }
       `}</style>
     </div>

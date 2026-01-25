@@ -6,10 +6,9 @@ import {
   signInAnonymously, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  signOut,
+  signOut, 
   updateProfile,
   sendPasswordResetEmail as firebaseSendPasswordResetEmail,
-  User,
   GoogleAuthProvider,
   GithubAuthProvider,
   OAuthProvider,
@@ -22,30 +21,35 @@ import {
   PhoneAuthProvider,
   PhoneMultiFactorGenerator,
   getMultiFactorResolver,
-  ConfirmationResult,
-  PhoneMultiFactorInfo,
   EmailAuthProvider,
   reauthenticateWithCredential,
   sendEmailVerification,
   verifyPasswordResetCode,
   confirmPasswordReset,
-  signInWithPhoneNumber
+  signInWithPhoneNumber,
+  onAuthStateChanged,
+  reload,
+  getIdToken
 } from 'firebase/auth';
+type AuthUser = any;
+type AuthConfirmationResult = any;
+type AuthRecaptchaVerifier = any;
+
 import { UserProfile } from '../types';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "your api key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "your_domain",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "your_id",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "your_storage_bucket",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "your_sender_id",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "your_app_id",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "your_measurement_id"
+  apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY || "AIzaSyAyz9eBWNEr8etDqgGOWwVx7REalDrKNV0",
+  authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN || "x10minds-ai.firebaseapp.com",
+  projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID || "x10minds-ai",
+  storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET || "x10minds-ai.firebasestorage.app",
+  messagingSenderId: (import.meta as any).env.VITE_FIREBASE_MESSAGING_SENDER_ID || "367222043450",
+  appId: (import.meta as any).env.VITE_FIREBASE_APP_ID || "1:367222043450:web:6b3b48ae74e74de22a1603",
+  measurementId: (import.meta as any).env.VITE_FIREBASE_MEASUREMENT_ID || "G-RQ898S1VSK"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+export const db = getFirestore(app);
 export const auth = getAuth(app);
 
 // Initialize App Check
@@ -55,7 +59,7 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' &&
   // This enables App Check for Firestore and Auth requests
   try {
     const appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY || 'your_recaptcha_site_key'),
+      provider: new ReCaptchaV3Provider('6LeEbzQsAAAAAG52lmIle1oVEx8XGTs9XJOVQ1fz'),
       isTokenAutoRefreshEnabled: true
     });
   } catch (e) {
@@ -65,15 +69,16 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' &&
   console.log("App Check skipped on localhost.");
 }
 
-// This checks if we are using placeholder credentials
-const isPlaceholder = firebaseConfig.projectId === "your_id";
+// This checks if we are still using the old placeholder ID. 
+// Since the projectId is now "x10minds-ai", this will be false, enabling real Auth functions.
+const isPlaceholder = firebaseConfig.projectId === "studio-3934682319-a1fe4";
 
 // Helper to wait for auth to settle on reload
 const waitForAuthInit = () => {
-  return new Promise<any | null>((resolve) => {
-      const unsubscribe = auth.onAuthStateChanged((user: any) => {
+  return new Promise<AuthUser | null>((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, (user: any) => {
           unsubscribe();
-          resolve(user);
+          resolve(user as AuthUser);
       }, (error: any) => {
           console.error("Auth init error", error);
           resolve(null);
@@ -141,7 +146,7 @@ export const logoutFirebase = async () => {
   await signOut(auth);
 };
 
-export const loginWithPhone = async (phoneNumber: string, recaptchaVerifier: any) => {
+export const loginWithPhone = async (phoneNumber: string, recaptchaVerifier: AuthRecaptchaVerifier) => {
   if (isPlaceholder) throw new Error("Please configure credentials.");
   return await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
 };
@@ -190,7 +195,7 @@ export const sendVerificationEmail = async () => {
 };
 
 export const reloadUser = async () => {
-  if (auth.currentUser) await auth.currentUser.reload();
+  if (auth.currentUser) await reload(auth.currentUser);
   return auth.currentUser;
 };
 
@@ -202,7 +207,7 @@ export const reauthenticateUser = async (password: string) => {
   const result = await reauthenticateWithCredential(user, credential);
   
   // Force a token refresh to ensure MFA session is fresh
-  await result.user.getIdToken(true);
+  await getIdToken(result.user, true);
   return result;
 };
 
@@ -244,7 +249,8 @@ export const reportBugToFirebase = async (description: string, email: string) =>
     const docRef = await addDoc(collection(db, "bug_reports"), {
       description,
       email,
-      timestamp: Date.now(),
+      userId: auth.currentUser?.uid,
+      createdAt: Date.now(), // Rules check keys().hasAll(['description', 'userId', 'createdAt'])
       status: 'new',
       platform: navigator.userAgent
     });
@@ -328,18 +334,18 @@ export const deleteUserAccount = async () => {
 
 // --- MFA FUNCTIONS ---
 
-export const getRecaptchaVerifier = (containerId: string, size: 'invisible' | 'normal' = 'invisible'): any => {
+export const getRecaptchaVerifier = (containerId: string, size: 'invisible' | 'normal' = 'invisible') => {
   return new RecaptchaVerifier(auth, containerId, {
     size: size,
   });
 };
 
-export const startMfaEnrollment = async (phoneNumber: string, recaptchaVerifier: any) => {
+export const startMfaEnrollment = async (phoneNumber: string, recaptchaVerifier: AuthRecaptchaVerifier) => {
   const user = auth.currentUser;
   if (!user) throw new Error("No user logged in");
 
-  await user.reload();
-  const session = await multiFactor(auth.currentUser!).getSession();
+  await reload(user);
+  const session = await multiFactor(user).getSession();
   const phoneOptions = {
     phoneNumber,
     session
@@ -385,5 +391,5 @@ export {
     PhoneMultiFactorGenerator,
     RecaptchaVerifier,
     getMultiFactorResolver,
-    type PhoneMultiFactorInfo
 };
+export type { PhoneMultiFactorInfo } from 'firebase/auth';

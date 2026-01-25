@@ -9,6 +9,8 @@ export interface Message {
   sources?: { title: string; url: string }[];
   feedback?: "like" | "dislike";
   thoughtTime?: number; // ms
+  chart?: any;
+  orderData?: any;
 }
 
 export interface ScoreData {
@@ -103,18 +105,24 @@ export interface AppSettings {
   aiPersonality: "Professional" | "Casual" | "Strict" | "Funny";
   dataCollection: boolean;
   theme: "dark" | "light";
-  accentColor: "orange" | "blue" | "green" | "purple";
+  accentColor: "orange" | "blue" | "green" | "purple" | "red" | "pink" | "teal" | "cyan" | "indigo";
   twoFactorAuth: boolean;
   publicProfile: boolean;
   language: string;
   fontSize: "small" | "medium" | "large";
   aiInstructions?: string;
+  shopCurrency?: string;
+  loginAlerts?: boolean;
+  singleSession?: boolean;
   shortcuts?: {
     history: string;
     chat: string;
     settings: string;
     help: string;
     theme: string;
+    dashboard: string;
+    calculator: string;
+    shop: string;
   };
 }
 

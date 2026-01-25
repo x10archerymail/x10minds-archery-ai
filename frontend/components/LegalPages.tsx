@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { ArrowLeft, Shield, Scale, Cookie, Lock } from "lucide-react";
 
 interface LegalPageProps {
@@ -30,18 +30,18 @@ const LegalPageBase: React.FC<LegalPageProps> = ({
         </button>
 
         <div className="flex items-center gap-4 mb-8">
-          <div className="p-3 bg-orange-500/10 rounded-2xl">{icon}</div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+          <div className="p-3 bg-[#FFD700]/10 rounded-2xl">{icon}</div>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight">
             {title}
           </h1>
         </div>
 
-        <div className="prose prose-invert prose-orange max-w-none">
+        <div className="prose prose-invert prose-neutral max-w-none">
           {content}
         </div>
 
-        <div className="mt-20 pt-10 border-t border-white/10 text-neutral-500 text-sm text-center">
-          © 2024 X10Minds Inc. All rights reserved. Last Updated: December 2024.
+        <div className="mt-20 pt-10 border-t border-white/10 text-neutral-500 text-[10px] font-bold uppercase tracking-widest text-center">
+          © 2026 X10Minds Inc. All rights reserved. Last Updated: January 2026.
         </div>
       </div>
     </div>
@@ -52,7 +52,7 @@ export const PrivacyPolicy: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   <LegalPageBase
     onBack={onBack}
     title="Privacy Policy"
-    icon={<Shield className="w-8 h-8 text-orange-500" />}
+    icon={<Shield className="w-8 h-8 text-[#FFD700]" />}
     content={
       <div className="space-y-6 text-neutral-300 leading-relaxed">
         <p className="italic text-sm text-neutral-500">
@@ -75,7 +75,7 @@ export const PrivacyPolicy: React.FC<{ onBack: () => void }> = ({ onBack }) => (
           our platform. This collection is necessary for the AI to function and
           to provide you with a personalized coaching experience.
         </p>
-        <div className="pl-4 border-l-2 border-orange-500/20 space-y-4">
+        <div className="pl-4 border-l-2 border-[#FFD700]/20 space-y-4">
           <p>
             <strong>A. Account Information:</strong> When you register, we
             collect your full name, email address, date of birth, and age. This
@@ -247,7 +247,7 @@ export const TermsOfService: React.FC<{ onBack: () => void }> = ({
   <LegalPageBase
     onBack={onBack}
     title="Terms of Service"
-    icon={<Scale className="w-8 h-8 text-blue-500" />}
+    icon={<Scale className="w-8 h-8 text-[#FFD700]" />}
     content={
       <div className="space-y-6 text-neutral-300 leading-relaxed">
         <p className="italic text-sm text-neutral-500">
@@ -361,7 +361,7 @@ export const TermsOfService: React.FC<{ onBack: () => void }> = ({
           6. Subscription, Payments, and Refunding
         </h2>
         <p>We offer "Sniper Pro" and "Ultra" membership tiers.</p>
-        <div className="pl-4 border-l-2 border-blue-500/20 space-y-4">
+        <div className="pl-4 border-l-2 border-[#FFD700]/20 space-y-4">
           <p>
             <strong>Billing:</strong> Paid subscriptions are billed in advance
             on a recurring monthly or annual basis. Your subscription will
@@ -432,7 +432,7 @@ export const CookiePolicy: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   <LegalPageBase
     onBack={onBack}
     title="Cookie Policy"
-    icon={<Cookie className="w-8 h-8 text-yellow-500" />}
+    icon={<Cookie className="w-8 h-8 text-[#FFD700]" />}
     content={
       <div className="space-y-6 text-neutral-300 leading-relaxed">
         <p className="italic text-sm text-neutral-500">
@@ -469,7 +469,7 @@ export const CookiePolicy: React.FC<{ onBack: () => void }> = ({ onBack }) => (
           When you use and access the Service, we may place a number of cookies
           files in your web browser. We use cookies for the following purposes:
         </p>
-        <div className="pl-4 border-l-2 border-yellow-500/20 space-y-4">
+        <div className="pl-4 border-l-2 border-[#FFD700]/20 space-y-4">
           <p>
             <strong>Essential Cookies:</strong> These are necessary for the
             website to function. They include cookies that allow you to log into
@@ -540,7 +540,7 @@ export const CookiePolicy: React.FC<{ onBack: () => void }> = ({ onBack }) => (
             For the Chrome web browser, please visit this page from Google:{" "}
             <a
               href="https://support.google.com/accounts/answer/32050"
-              className="text-orange-500 hover:underline"
+              className="text-[#FFD700] hover:underline"
             >
               Support Link
             </a>
@@ -550,7 +550,7 @@ export const CookiePolicy: React.FC<{ onBack: () => void }> = ({ onBack }) => (
             Microsoft:{" "}
             <a
               href="http://support.microsoft.com/kb/278835"
-              className="text-orange-500 hover:underline"
+              className="text-[#FFD700] hover:underline"
             >
               Support Link
             </a>
@@ -559,7 +559,7 @@ export const CookiePolicy: React.FC<{ onBack: () => void }> = ({ onBack }) => (
             For the Firefox web browser, please visit this page from Mozilla:{" "}
             <a
               href="https://support.mozilla.org/en-US/kb/delete-cookies-remove-info-websites-stored"
-              className="text-orange-500 hover:underline"
+              className="text-[#FFD700] hover:underline"
             >
               Support Link
             </a>
@@ -590,7 +590,7 @@ export const SecurityPolicy: React.FC<{ onBack: () => void }> = ({
   <LegalPageBase
     onBack={onBack}
     title="Security"
-    icon={<Lock className="w-8 h-8 text-green-500" />}
+    icon={<Lock className="w-8 h-8 text-[#FFD700]" />}
     content={
       <div className="space-y-6 text-neutral-300 leading-relaxed">
         <p className="italic text-sm text-neutral-500">
@@ -606,7 +606,7 @@ export const SecurityPolicy: React.FC<{ onBack: () => void }> = ({
         <h2 className="text-white text-2xl font-bold mt-8 border-b border-white/5 pb-2">
           1. Encryption and Data Protection
         </h2>
-        <div className="pl-4 border-l-2 border-green-500/20 space-y-4">
+        <div className="pl-4 border-l-2 border-[#FFD700]/20 space-y-4">
           <p>
             <strong>A. Transmission (Data in Transit):</strong> All
             communications between the X10Minds client and our servers use TLS
