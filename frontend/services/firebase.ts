@@ -65,7 +65,7 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' &&
   // This enables App Check for Firestore and Auth requests
   try {
     const appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider('6LeEbzQsAAAAAG52lmIle1oVEx8XGTs9XJOVQ1fz'),
+      provider: new ReCaptchaV3Provider((import.meta as any).env.VITE_RECAPTCHA_SITE_KEY || '6LeEbzQsAAAAAG52lmIle1oVEx8XGTs9XJOVQ1fz'),
       isTokenAutoRefreshEnabled: true
     });
   } catch (e) {
