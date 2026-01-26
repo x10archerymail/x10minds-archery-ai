@@ -231,10 +231,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
       "How to tune my plunger for better groups?",
       "Breathing techniques for high-pressure shots",
       "Mental focus drills for tournament preparation",
+      "Explain the Archer's Paradox in detail",
+      "How to identify and fix limb twist?",
+      "Fine-tuning arrow flight with paper tuning",
+      "Managing target panic and gold shyness",
+      "The impact of finger pressure on string release",
       "History of Olympic Archery",
       "How to choose the right arrow length?",
       "Understanding FOC (Front of Center) balance",
       "Tips for shooting in windy conditions",
+      "Optimal bow-arm stability techniques",
     ];
 
     const handleMoreIdeas = () => {

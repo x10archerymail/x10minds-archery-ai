@@ -34,7 +34,7 @@ Traditional archery coaching is often expensive, inaccessible, or inconsistent. 
 ## 🛠 Tech Stack
 
 - **Frontend**: React + TypeScript + Vite + TailwindCSS
-- **AI Core**: Google Gemini 2.5 Flash (Vision & Text)
+- **AI Core**: Google Gemini 3.0 Flash (Vision & Text)
 - **Backend/Database**: Firebase (Firestore, Auth, Storage)
 - **Payments**: Stripe Integration
 - **State Management**: React Hooks + Context API
