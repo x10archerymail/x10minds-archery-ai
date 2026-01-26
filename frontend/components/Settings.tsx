@@ -374,8 +374,44 @@ const Settings: React.FC<SettingsProps> = ({
 
   const handleSave = () => {
     onUpdateSettings(localSettings);
-    if (currentUser && onUpdateUser && avatarUrl !== currentUser.avatarUrl) {
-      onUpdateUser({ ...currentUser, avatarUrl });
+
+    if (currentUser && onUpdateUser) {
+      let updatedUser = { ...currentUser };
+      let changed = false;
+
+      // Update Avatar
+      if (avatarUrl !== currentUser.avatarUrl) {
+        updatedUser.avatarUrl = avatarUrl;
+        changed = true;
+      }
+
+      // Enforce Concurrent Session Setting
+      // If enabled, we remove all other devices from the list regarding of backend state
+      // ensuring the user preference is reflected in data
+      if (localSettings.singleSession) {
+        const currentDeviceId = localStorage.getItem("x10minds_device_id");
+        if (
+          updatedUser.activeDevices &&
+          updatedUser.activeDevices.length > 1 &&
+          currentDeviceId
+        ) {
+          const myDevice = updatedUser.activeDevices.find(
+            (d) => d.deviceId === currentDeviceId,
+          );
+          if (myDevice) {
+            updatedUser.activeDevices = [myDevice];
+            changed = true;
+            notify(
+              "Other sessions terminated due to single session policy",
+              "info",
+            );
+          }
+        }
+      }
+
+      if (changed) {
+        onUpdateUser(updatedUser);
+      }
     }
 
     // Sync currency with shop preferences
@@ -543,16 +579,16 @@ const Settings: React.FC<SettingsProps> = ({
                           <button
                             key={i}
                             onClick={() =>
-                              setAvatarUrl(`/images/avatars/avatar_${i}.png`)
+                              setAvatarUrl(`/images/avatars/avator ${i}.jpeg`)
                             }
                             className={`aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-110 ${
-                              avatarUrl === `/images/avatars/avatar_${i}.png`
+                              avatarUrl === `/images/avatars/avator ${i}.jpeg`
                                 ? `${activeAccent === "orange" ? "border-[#FFD700]" : `border-${activeAccent}-500`} shadow-lg scale-110`
                                 : "border-transparent opacity-60 hover:opacity-100"
                             }`}
                           >
                             <img
-                              src={`/images/avatars/avatar_${i}.png`}
+                              src={`/images/avatars/avator ${i}.jpeg`}
                               alt={`Avatar ${i}`}
                               className="w-full h-full object-cover"
                             />
@@ -1874,28 +1910,6 @@ const Settings: React.FC<SettingsProps> = ({
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-4 border-b border-white/5">
-                <div>
-                  <p className={`font-bold ${textTitle}`}>
-                    Login Notifications
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    Get alerted of new logins on new devices
-                  </p>
-                </div>
-                <button
-                  onClick={() =>
-                    updateSetting("loginAlerts", !localSettings.loginAlerts)
-                  }
-                  className={`w-12 h-6 rounded-full relative transition-all duration-300 ${localSettings.loginAlerts ? "" : switchBgOff}`}
-                  style={getToggleStyle(localSettings.loginAlerts || false)}
-                >
-                  <div
-                    className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ${localSettings.loginAlerts ? "right-1" : "left-1"}`}
-                  />
-                </button>
-              </div>
-
               <div className="flex items-center justify-between py-4 border-b border-white/5">
                 <div>
                   <p className={`font-bold ${textTitle}`}>

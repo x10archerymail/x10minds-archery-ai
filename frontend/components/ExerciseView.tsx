@@ -13,9 +13,16 @@ import {
   X,
   Maximize2,
   Minimize,
+  Send,
+  Sparkles,
 } from "lucide-react";
-import { generateExercisePlan } from "../services/geminiService";
-import { Exercise } from "../types";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {
+  generateExercisePlan,
+  streamGeminiResponse,
+} from "../services/geminiService";
+import { Exercise, UserProfile } from "../types";
 import { translations } from "../i18n";
 import { PREDEFINED_PLANS } from "../services/exercisePlans";
 
@@ -25,6 +32,8 @@ interface ExerciseViewProps {
   onSaveToHistory: (messages: any[]) => void;
   preloadedPlan?: Exercise[] | null;
   language?: string;
+  userProfile?: UserProfile | null;
+  onUpdateUser?: (u: UserProfile) => void;
 }
 
 // Lottie animation removed
@@ -33,8 +42,10 @@ const ExerciseAnimator = React.memo<{
   type: string;
   isDark: boolean;
   accentColor: string;
+  accentText: string;
   isLoading?: boolean;
-}>(({ type, isDark, accentColor, isLoading }) => {
+  imageUrl?: string;
+}>(({ type, isDark, accentColor, accentText, isLoading, imageUrl }) => {
   const color =
     accentColor === "blue"
       ? "#3b82f6"
@@ -84,23 +95,41 @@ const ExerciseAnimator = React.memo<{
               Processing Intel...
             </span>
           </div>
-        ) : (
-          <div className="relative w-full h-full flex flex-col items-center justify-center">
-            {/* Generic Idle/Other Animation instead of exercise-specific ones */}
-            <div className="relative w-full aspect-square max-h-[400px] group">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity" />
-              <video
-                src="/animations/idle.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-contain mix-blend-lighten drop-shadow-[0_0_30px_rgba(255,215,0,0.2)]"
+        ) : imageUrl ? (
+          <div className="relative w-full h-full flex items-center justify-center animate-in zoom-in-95 duration-500 p-4">
+            <div className="relative w-full group rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+              <img
+                src={imageUrl}
+                alt="Exercise Demonstration"
+                className="w-full h-auto object-cover rounded-2xl"
               />
-              {/* Overlay Label */}
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full">
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-80 text-white">
-                  {type === "IDLE" ? "System Idle" : "Active Session"}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                <p className="text-white text-xs font-bold uppercase tracking-widest">
+                  Targeting: {type}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="relative w-full h-full flex flex-col items-center justify-center opacity-40">
+            {/* Archery Technical Heartbeat - Fallback instead of idling video */}
+            <div className="relative w-64 h-64 flex items-center justify-center">
+              <div
+                className="absolute inset-0 rounded-full border-2 border-dashed border-white/10 animate-spin"
+                style={{ animationDuration: "30s" }}
+              />
+              <div
+                className="absolute inset-4 rounded-full border border-white/5 animate-spin"
+                style={{
+                  animationDuration: "20s",
+                  animationDirection: "reverse",
+                }}
+              />
+              <Dumbbell className={`w-16 h-16 ${accentText} animate-pulse`} />
+
+              <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 px-6 py-2 bg-black/20 backdrop-blur-xl border border-white/5 rounded-full">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-80 text-white whitespace-nowrap">
+                  {type === "IDLE" ? "System Ready" : "Form Analysis Active"}
                 </p>
               </div>
             </div>
@@ -167,12 +196,31 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
     onSaveToHistory,
     preloadedPlan,
     language = "English",
+    userProfile,
+    onUpdateUser,
   }) => {
     const [bodyPart, setBodyPart] = useState("Core");
     const [level, setLevel] = useState("Intermediate");
     const [plan, setPlan] = useState<Exercise[] | null>(preloadedPlan ?? null);
     const [isLoading, setIsLoading] = useState(false);
     const [isDescExpanded, setIsDescExpanded] = useState(false);
+
+    // AI Advisor Chat State
+    const [chatInput, setChatInput] = useState("");
+    const [chatMessages, setChatMessages] = useState<any[]>([]);
+    const [isChatLoading, setIsChatLoading] = useState(false);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    const EXERCISE_SUGGESTIONS = [
+      "How to do this exercise perfectly?",
+      "What muscle groups does this target?",
+      "Show me a YouTube video of this.",
+      "Give me a tip for better form.",
+      "How can I make this harder?",
+      "What are the common mistakes for this?",
+      "I feel pain in my shoulder, what should I do?",
+    ];
 
     const t = (key: string) => {
       return (
@@ -236,8 +284,18 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
     const handleGenerate = async () => {
       setIsLoading(true);
       setPlan(null);
+
+      // Secret Level Improvement: If user has completed sessions, boost difficulty secretly
+      const completedSessions = userProfile?.completedSessions || 0;
+      let effectiveLevel = level;
+      if (completedSessions > 10 && level === "Beginner")
+        effectiveLevel = "Intermediate";
+      if (completedSessions > 30 && level === "Intermediate")
+        effectiveLevel = "Advanced";
+      if (completedSessions > 60) effectiveLevel = "Advanced++"; // Secret elite level
+
       try {
-        const result = await generateExercisePlan(bodyPart, level);
+        const result = await generateExercisePlan(bodyPart, effectiveLevel);
         const parsed = JSON.parse(result);
         if (Array.isArray(parsed)) {
           setPlan(parsed);
@@ -338,13 +396,215 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
       } else {
         setIsPlaying(false);
         setIsFinished(true);
+
+        // Mark session as complete
+        if (userProfile && onUpdateUser) {
+          const currentSessions = userProfile.completedSessions || 0;
+          onUpdateUser({
+            ...userProfile,
+            completedSessions: currentSessions + 1,
+          });
+        }
       }
     };
+
+    const handleChatSubmit = async (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
+      if (!chatInput.trim() || !plan) return;
+
+      const currentEx = plan[currentStep] || plan[0];
+      const userMsg = {
+        role: "user",
+        content: chatInput,
+        timestamp: Date.now(),
+      };
+      setChatMessages((prev) => [...prev, userMsg]);
+      setChatInput("");
+      setSuggestions([]);
+      setIsChatLoading(true);
+
+      try {
+        const prompt = `Assistant for Archery Exercise. 
+            Current Exercise: ${currentEx.name}
+            Description: ${currentEx.description}
+            User Question: ${userMsg.content}
+            
+            Instruction: Provide clear form advice, mention muscles, and if possible provide a YouTube link or image description. 
+            Keep it brief and coaching-focused. Use markdown.`;
+
+        const result = await streamGeminiResponse(
+          [],
+          prompt,
+          undefined,
+          userProfile?.fullName,
+          userProfile?.subscriptionTier,
+          true,
+        );
+        let fullText = "";
+        for await (const chunk of result) {
+          fullText += chunk.text || "";
+          setChatMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last && last.role === "model") {
+              return [...prev.slice(0, -1), { ...last, content: fullText }];
+            }
+            return [
+              ...prev,
+              { role: "model", content: fullText, timestamp: Date.now() },
+            ];
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsChatLoading(false);
+      }
+    };
+
+    const onChatInputChange = (val: string) => {
+      setChatInput(val);
+      if (val.trim()) {
+        const filtered = EXERCISE_SUGGESTIONS.filter((s) =>
+          s.toLowerCase().includes(val.toLowerCase()),
+        );
+        setSuggestions(filtered.slice(0, 4));
+      } else {
+        setSuggestions([]);
+      }
+    };
+
+    useEffect(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [chatMessages]);
 
     // Render Setup View
     if (!isPlaying) {
       return (
         <div className={`p-6 md:p-8 max-w-[2000px] mx-auto ${bgClass}`}>
+          {/* AI Advisor at the top */}
+          <div
+            className={`mb-12 rounded-[40px] overflow-hidden border border-neutral-800 shadow-2xl relative group ${isDark ? "bg-neutral-900/40" : "bg-white"}`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-blue-500/5 opacity-50"></div>
+            <div className="relative p-6 md:p-10">
+              <div className="flex flex-col md:flex-row gap-8 items-start">
+                <div className="w-full md:w-1/3">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div
+                      className={`p-3 rounded-2xl ${accentBg} text-white shadow-xl`}
+                    >
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3
+                        className={`text-xl font-black tracking-tight ${headerText}`}
+                      >
+                        AI CO-COACH
+                      </h3>
+                      <p
+                        className={`text-[10px] font-bold uppercase tracking-[0.3em] ${subText}`}
+                      >
+                        Neural Link Active
+                      </p>
+                    </div>
+                  </div>
+                  <p className={`text-sm ${subText} leading-relaxed mb-6`}>
+                    Ask me about any technique, equipment adjustment during SPT,
+                    or biomechanical alignment. I have full access to your
+                    current regimen.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {EXERCISE_SUGGESTIONS.slice(0, 3).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          setChatInput(s);
+                          handleChatSubmit();
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold border ${isDark ? "border-white/10 text-white/40 hover:text-white" : "border-gray-200 text-gray-500 hover:text-black"} transition-colors`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  className={`flex-1 w-full rounded-3xl border flex flex-col h-[300px] ${isDark ? "bg-black/40 border-white/5" : "bg-gray-50 border-gray-100"}`}
+                >
+                  <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
+                    {chatMessages.length === 0 && (
+                      <div className="h-full flex flex-col items-center justify-center opacity-30">
+                        <Sparkles className="w-8 h-8 mb-2" />
+                        <p className="text-xs font-bold uppercase tracking-widest">
+                          Waiting for input...
+                        </p>
+                      </div>
+                    )}
+                    {chatMessages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-2`}
+                      >
+                        <div
+                          className={`max-w-[85%] p-4 rounded-2xl text-sm ${msg.role === "user" ? `${accentBg} text-white shadow-lg` : `${isDark ? "bg-white/5 border border-white/10" : "bg-white border border-gray-100"}`}`}
+                        >
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            className="prose prose-sm prose-invert prose-p:leading-relaxed"
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                    ))}
+                    {isChatLoading && (
+                      <div className="flex justify-start">
+                        <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                          <Loader2 className="w-4 h-4 animate-spin opacity-50" />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef}></div>
+                  </div>
+                  <div className="p-4 border-t border-white/5 relative">
+                    {suggestions.length > 0 && (
+                      <div className="absolute bottom-full left-4 right-4 mb-2 bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-20">
+                        {suggestions.map((s, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setChatInput(s);
+                              setSuggestions([]);
+                              handleChatSubmit();
+                            }}
+                            className="w-full text-left p-3 text-xs font-bold hover:bg-white/5 transition-colors text-white/70 hover:text-white border-b border-white/5 last:border-0"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <form onSubmit={handleChatSubmit} className="flex gap-2">
+                      <input
+                        value={chatInput}
+                        onChange={(e) => onChatInputChange(e.target.value)}
+                        placeholder="Consult AI Co-Coach..."
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500/50 transition-colors"
+                      />
+                      <button
+                        type="submit"
+                        className={`p-2.5 rounded-xl ${accentBg} text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform`}
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <header className="mb-6 sm:mb-8">
             <h2
               className={`text-2xl sm:text-3xl font-bold mb-2 flex items-center gap-2 sm:gap-3 ${headerText}`}
@@ -495,11 +755,20 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                                 : ex.reps}
                             </p>
                             <p
-                              className={`text-xs mt-2 max-w-md ${subText} opacity-70 line-clamp-3 hover:line-clamp-none cursor-pointer transition-all`}
+                              className={`text-[10px] mt-2 max-w-md ${subText} opacity-70 line-clamp-3 hover:line-clamp-none cursor-pointer transition-all`}
                               title="Click to expand"
                             >
                               {ex.description}
                             </p>
+                            {ex.imageUrl && (
+                              <div className="mt-4 rounded-xl overflow-hidden border border-white/5 shadow-lg w-full max-w-[200px] aspect-square">
+                                <img
+                                  src={ex.imageUrl}
+                                  alt={ex.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                         <ChevronRight
@@ -522,6 +791,7 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                       type="IDLE"
                       isDark={isDark}
                       accentColor={accentColor}
+                      accentText={accentText}
                       isLoading={isLoading}
                     />
                   </div>
@@ -796,73 +1066,74 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                   type={currentAnimType}
                   isDark={isDark}
                   accentColor={accentColor}
+                  accentText={accentText}
+                  imageUrl={activeEx.imageUrl}
                 />
               </div>
+            </div>
+            {/* Float Controls */}
+            <div
+              className={`absolute bottom-4 sm:bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-6 px-4 sm:px-8 py-3.5 sm:py-5 rounded-[24px] sm:rounded-[32px] backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 z-[250] pointer-events-auto ${
+                isDark ? "bg-black/40" : "bg-white/80"
+              }`}
+            >
+              <button
+                onClick={() => {
+                  // Smart Previous Logic
+                  // If playing for > 3 seconds, restart current exercise
+                  // If playing for < 3 seconds, go to previous exercise
+                  const initialDuration = plan[currentStep].duration || 60;
+                  const timeElapsed = initialDuration - timer;
 
-              {/* Float Controls */}
-              <div
-                className={`absolute bottom-4 sm:bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-6 px-4 sm:px-8 py-3.5 sm:py-5 rounded-[24px] sm:rounded-[32px] backdrop-blur-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 z-[250] pointer-events-auto ${
-                  isDark ? "bg-black/40" : "bg-white/80"
+                  if (currentStep > 0 && timeElapsed < 3) {
+                    // Go to previous
+                    const prev = currentStep - 1;
+                    setCurrentStep(prev);
+                    startStep(prev);
+                  } else {
+                    // Restart current
+                    startStep(currentStep);
+                  }
+                }}
+                className={`relative z-[300] p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all disabled:opacity-20 cursor-pointer ${
+                  isDark
+                    ? "hover:bg-white/10 text-white"
+                    : "hover:bg-black/5 text-black"
                 }`}
+                title="Restart / Previous"
               >
-                <button
-                  onClick={() => {
-                    // Smart Previous Logic
-                    // If playing for > 3 seconds, restart current exercise
-                    // If playing for < 3 seconds, go to previous exercise
-                    const initialDuration = plan[currentStep].duration || 60;
-                    const timeElapsed = initialDuration - timer;
+                {/* Show SkipBack icon if we would skip back, else RotateCcw */}
+                {currentStep > 0 &&
+                (plan[currentStep].duration || 60) - timer < 3 ? (
+                  <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
+                ) : (
+                  <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
+                )}
+              </button>
 
-                    if (currentStep > 0 && timeElapsed < 3) {
-                      // Go to previous
-                      const prev = currentStep - 1;
-                      setCurrentStep(prev);
-                      startStep(prev);
-                    } else {
-                      // Restart current
-                      startStep(currentStep);
-                    }
-                  }}
-                  className={`relative z-[300] p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all disabled:opacity-20 cursor-pointer ${
-                    isDark
-                      ? "hover:bg-white/10 text-white"
-                      : "hover:bg-black/5 text-black"
-                  }`}
-                  title="Restart / Previous"
-                >
-                  {/* Show SkipBack icon if we would skip back, else RotateCcw */}
-                  {currentStep > 0 &&
-                  (plan[currentStep].duration || 60) - timer < 3 ? (
-                    <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
-                  ) : (
-                    <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
-                  )}
-                </button>
+              <button
+                onClick={() => setIsPaused(!isPaused)}
+                className={`relative z-[300] w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-white shadow-2xl transition-all hover:scale-110 active:scale-90 cursor-pointer ${accentBg}`}
+                title={isPaused ? "Resume" : "Pause"}
+              >
+                {isPaused ? (
+                  <PlayCircle className="w-8 h-8 sm:w-10 sm:h-10 ml-1" />
+                ) : (
+                  <Pause className="w-8 h-8 sm:w-10 sm:h-10" />
+                )}
+              </button>
 
-                <button
-                  onClick={() => setIsPaused(!isPaused)}
-                  className={`relative z-[300] w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-white shadow-2xl transition-all hover:scale-110 active:scale-90 cursor-pointer ${accentBg}`}
-                  title={isPaused ? "Resume" : "Pause"}
-                >
-                  {isPaused ? (
-                    <PlayCircle className="w-8 h-8 sm:w-10 sm:h-10 ml-1" />
-                  ) : (
-                    <Pause className="w-8 h-8 sm:w-10 sm:h-10" />
-                  )}
-                </button>
-
-                <button
-                  onClick={handleNext}
-                  className={`relative z-[300] p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all cursor-pointer ${
-                    isDark
-                      ? "hover:bg-white/10 text-white"
-                      : "hover:bg-black/5 text-black"
-                  }`}
-                  title="Skip to Next"
-                >
-                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                </button>
-              </div>
+              <button
+                onClick={handleNext}
+                className={`relative z-[300] p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all cursor-pointer ${
+                  isDark
+                    ? "hover:bg-white/10 text-white"
+                    : "hover:bg-black/5 text-black"
+                }`}
+                title="Skip to Next"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
             </div>
           </div>
 
@@ -906,6 +1177,24 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                       : `${activeEx.duration ?? 0}s`}
                   </p>
                 </div>
+                {activeEx.rest && (
+                  <div
+                    className={`p-4 rounded-2xl border ${
+                      isDark
+                        ? "bg-black/40 border-neutral-800"
+                        : "bg-gray-50 border-gray-100"
+                    }`}
+                  >
+                    <p
+                      className={`text-[10px] font-bold uppercase opacity-50 mb-1 ${headerText}`}
+                    >
+                      {t("rest_label") || "REST"}
+                    </p>
+                    <p className={`text-xl font-black ${headerText}`}>
+                      {activeEx.rest}
+                    </p>
+                  </div>
+                )}
                 <div
                   className={`p-4 rounded-2xl border ${
                     isDark
@@ -952,9 +1241,13 @@ const ExerciseView: React.FC<ExerciseViewProps> = React.memo(
                   isDescExpanded ? "max-h-[500px]" : "max-h-[100px]"
                 }`}
               >
-                <p className={`text-sm leading-relaxed font-medium ${subText}`}>
-                  {activeEx.description}
-                </p>
+                <div
+                  className={`text-sm leading-relaxed font-medium ${subText} prose prose-sm ${isDark ? "prose-invert" : ""}`}
+                >
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {activeEx.description}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
 

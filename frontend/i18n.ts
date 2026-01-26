@@ -150,6 +150,7 @@ export const translations: Record<string, Record<string, string>> = {
     open_spt_generator: "OPEN SPT GENERATOR",
     view_execute_plan: "View & Execute This Plan",
     opening_plan: "Opening Plan in SPT Generator... 🏋️",
+    smart_analysis: "Smart Analysis",
   },
   Spanish: {
     dashboard: "Tablero",
@@ -302,6 +303,7 @@ export const translations: Record<string, Record<string, string>> = {
     open_spt_generator: "ABRIR GENERADOR SPT",
     view_execute_plan: "Ver y Ejecutar este Plan",
     opening_plan: "Abriendo Plan en Generador SPT... 🏋️",
+    smart_analysis: "Análisis Inteligente",
   },
   French: {
     dashboard: "Tableau de bord",
@@ -426,6 +428,7 @@ export const translations: Record<string, Record<string, string>> = {
     full_screen: "Plein Écran",
     exit_full_screen: "Quitter Plein Écran",
     clear: "Effacer",
+    smart_analysis: "Analyse Intelligente",
   },
   German: {
     dashboard: "Dashboard",
@@ -550,8 +553,9 @@ export const translations: Record<string, Record<string, string>> = {
     full_screen: "Vollbild",
     exit_full_screen: "Vollbild beenden",
     clear: "Löschen",
+    smart_analysis: "Intelligente Analyse",
   },
-  Hindi: {
+ Hindi: {
     dashboard: "डैशबोर्ड",
     chat: "कोच एआई",
     analysis: "फॉर्म विश्लेषण",
@@ -701,6 +705,7 @@ export const translations: Record<string, Record<string, string>> = {
     open_spt_generator: "SPT जेनरेटर खोलें",
     view_execute_plan: "यह योजना देखें और निष्पादित करें",
     opening_plan: "SPT जेनरेटर में योजना खुल रही है... 🏋️",
+    smart_analysis: "स्मार्ट विश्लेषण",
   },
   Chinese: {
     dashboard: "仪表板",
@@ -828,6 +833,7 @@ export const translations: Record<string, Record<string, string>> = {
     open_spt_generator: "打开 SPT 生成器",
     view_execute_plan: "查看并执行此计划",
     opening_plan: "正在 SPT 生成器中打开计划... 🏋️",
+    smart_analysis: "智能分析",
   },
   Japanese: {
     dashboard: "ダッシュボード",
@@ -955,6 +961,7 @@ export const translations: Record<string, Record<string, string>> = {
     open_spt_generator: "SPTジェネレーターを開く",
     view_execute_plan: "このプランを表示して実行",
     opening_plan: "SPTジェネレーターでプランを開いています... 🏋️",
+    smart_analysis: "スマート分析",
   },
   Arabic: {
     dashboard: "لوحة القيادة",
@@ -1079,6 +1086,7 @@ export const translations: Record<string, Record<string, string>> = {
     full_screen: "ملء الشاشة",
     exit_full_screen: "خروج من ملء الشاشة",
     clear: "مسح",
+    smart_analysis: "التحليل الذكي",
   },
 };
 

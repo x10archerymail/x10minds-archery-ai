@@ -12,6 +12,8 @@ import {
   X,
   Trash2,
   Maximize2,
+  Zap,
+  Search,
 } from "lucide-react";
 import { analyzeArcheryImage } from "../services/geminiService";
 import ReactMarkdown from "react-markdown";
@@ -270,27 +272,54 @@ const AnalysisView: React.FC<AnalysisViewProps> = React.memo(
               >
                 <button
                   onClick={() => setAnalysisMode("FORM")}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${
                     analysisMode === "FORM"
-                      ? `bg-${accentColor}-600 text-white shadow-lg shadow-${accentColor}-600/20`
-                      : "text-neutral-500 hover:text-white hover:bg-white/5"
+                      ? `${accentBg} text-black shadow-xl ${themes.isGold ? "shadow-[#FFD700]/20" : "shadow-current/20"} scale-[1.02] border border-white/20`
+                      : "text-neutral-500 hover:text-white hover:bg-white/5 border border-transparent"
                   }`}
                 >
-                  <User className="w-4 h-4" />
-                  Form
+                  <Target className="w-3.5 h-3.5" />
+                  Form Check
                 </button>
                 <button
                   onClick={() => setAnalysisMode("TARGET")}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${
                     analysisMode === "TARGET"
-                      ? `bg-${accentColor}-600 text-white shadow-lg shadow-${accentColor}-600/20`
-                      : "text-neutral-500 hover:text-white hover:bg-white/5"
+                      ? "bg-red-600 text-white shadow-xl shadow-red-600/20 scale-[1.02] border border-white/20"
+                      : "text-neutral-500 hover:text-white hover:bg-white/5 border border-transparent"
                   }`}
                 >
-                  <Target className="w-4 h-4" />
-                  Target
+                  <Search className="w-3.5 h-3.5" />
+                  Target Scan
                 </button>
               </div>
+
+              {/* Action Button */}
+              {images.length > 0 && !isAnalyzing && (
+                <button
+                  onClick={handleAnalyze}
+                  className={`mt-4 px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] transition-all duration-500 active:scale-95 shadow-2xl flex items-center justify-center gap-3 group relative overflow-hidden ${
+                    analysisMode === "FORM"
+                      ? `${accentBg} text-black`
+                      : "bg-red-600 text-white shadow-red-600/20"
+                  }`}
+                >
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                  <span className="relative z-10 flex items-center gap-3">
+                    {analysisMode === "FORM" ? (
+                      <>
+                        <Zap className="w-5 h-5 fill-current" />
+                        Execute Form Scan
+                      </>
+                    ) : (
+                      <>
+                        <Activity className="w-5 h-5" />
+                        Initialize Target Scan
+                      </>
+                    )}
+                  </span>
+                </button>
+              )}
             </div>
           </header>
 

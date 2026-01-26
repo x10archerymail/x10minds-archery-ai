@@ -187,7 +187,7 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
     },
     {
       name: "Charge",
-      price: 299,
+      price: 599,
       period: "/mo",
       icon: Zap,
       color: "text-blue-400",
@@ -205,7 +205,7 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
     },
     {
       name: "Pro",
-      price: 1399,
+      price: 1699,
       period: "/mo",
       icon: Zap,
       color: accentText,
@@ -234,7 +234,7 @@ const SubscriptionView: React.FC<SubscriptionViewProps> = ({
     },
     {
       name: "Ultra",
-      price: 2999,
+      price: 3299,
       period: "/mo",
       icon: Crown,
       color: "text-yellow-400",

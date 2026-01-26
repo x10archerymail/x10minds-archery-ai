@@ -219,6 +219,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
     const [isListening, setIsListening] = useState(false);
     const [pendingOrder, setPendingOrder] = useState<any>(null);
     const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [inspirationOffset, setInspirationOffset] = useState(0);
+
+    const INSPIRATION_QUESTIONS = [
+      "How to improve my archery anchor point?",
+      "Best recurve bow for intermediate archers?",
+      "What is SPT 1 and how do I perform it?",
+      "Analyze my biomechanics from this image",
+      "Difference between dynamic and static spine?",
+      "How to tune my plunger for better groups?",
+      "Breathing techniques for high-pressure shots",
+      "Mental focus drills for tournament preparation",
+      "History of Olympic Archery",
+      "How to choose the right arrow length?",
+      "Understanding FOC (Front of Center) balance",
+      "Tips for shooting in windy conditions",
+    ];
+
+    const handleMoreIdeas = () => {
+      setInspirationOffset((prev) => (prev + 4) % INSPIRATION_QUESTIONS.length);
+      showNotification("Intelligence database updated 🧠");
+    };
 
     const t = (key: string) => {
       return getTranslation(language, key);
@@ -1835,6 +1857,63 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
             ref={messagesEndRef}
             className="h-8 md:h-12 pointer-events-none"
           />
+
+          {/* Inspiration Section */}
+          {messages.length === 0 && !input && (
+            <div className="max-w-2xl mx-auto mb-32 px-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+              <div className="flex items-center justify-between mb-6">
+                <h3
+                  className={`text-sm font-black uppercase tracking-[0.3em] font-orbitron ${isDark ? "text-white/40" : "text-gray-400"}`}
+                >
+                  Need a little inspiration?
+                </h3>
+                <button
+                  onClick={handleMoreIdeas}
+                  className={`text-[10px] font-black uppercase tracking-widest ${activeTextClass} hover:opacity-70 transition-opacity`}
+                >
+                  More ideas
+                </button>
+              </div>
+              <div className="space-y-3">
+                {INSPIRATION_QUESTIONS.slice(
+                  inspirationOffset,
+                  inspirationOffset + 4,
+                ).map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setInput(q);
+                    }}
+                    className={`w-full text-left p-5 rounded-3xl border flex items-center justify-between group transition-all duration-300 hover:scale-[1.02] active:scale-95 ${isDark ? "bg-white/5 border-white/5 hover:border-white/10" : "bg-white border-gray-100 hover:border-gray-200 shadow-sm"}`}
+                  >
+                    <div className="flex items-center gap-5">
+                      <div
+                        className={`p-2.5 rounded-xl ${isDark ? "bg-white/5 text-white/40 group-hover:bg-white/10 group-hover:text-white" : "bg-gray-50 text-gray-400 group-hover:bg-gray-100 group-hover:text-black"} transition-all`}
+                      >
+                        {i === 0 ? (
+                          <Dumbbell className="w-4 h-4" />
+                        ) : i === 1 ? (
+                          <RefreshCw className="w-4 h-4" />
+                        ) : i === 2 ? (
+                          <ImageIcon className="w-4 h-4" />
+                        ) : (
+                          <Zap className="w-4 h-4" />
+                        )}
+                      </div>
+                      <span
+                        className={`text-sm font-bold tracking-tight ${isDark ? "text-white/60 group-hover:text-white" : "text-gray-600 group-hover:text-black"} transition-colors`}
+                      >
+                        {q}
+                      </span>
+                    </div>
+                    <ArrowRight
+                      className={`w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all ${activeTextClass}`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div
@@ -2104,29 +2183,67 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(
                   }`}
                 ></div>
 
-                {/* Text input */}
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
+                {/* Text input with suggestions */}
+                <div className="flex-1 relative flex flex-col">
+                  {suggestions.length > 0 && (
+                    <div
+                      className={`absolute bottom-full left-0 right-0 mb-3 rounded-2xl border shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-bottom-2 ${isDark ? "bg-neutral-900 border-white/10" : "bg-white border-gray-200"}`}
+                    >
+                      {suggestions.map((s, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setInput(s);
+                            setSuggestions([]);
+                          }}
+                          className={`w-full text-left p-3.5 text-xs font-bold transition-colors border-b last:border-0 ${isDark ? "hover:bg-white/5 text-white/70 hover:text-white border-white/5" : "hover:bg-gray-50 text-gray-700 hover:text-black border-gray-100"}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Sparkles
+                              className={`w-3.5 h-3.5 ${activeTextClass}`}
+                            />
+                            {s}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <textarea
+                    value={input}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setInput(val);
+                      if (val.trim()) {
+                        const filtered = INSPIRATION_QUESTIONS.filter((q) =>
+                          q.toLowerCase().includes(val.toLowerCase()),
+                        );
+                        setSuggestions(filtered.slice(0, 5));
+                      } else {
+                        setSuggestions([]);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                        setSuggestions([]);
+                      }
+                    }}
+                    placeholder={
+                      isLimitReached
+                        ? t("limit_reached")
+                        : isListening
+                          ? "Listening..."
+                          : t("type_message")
                     }
-                  }}
-                  placeholder={
-                    isLimitReached
-                      ? t("limit_reached")
-                      : isListening
-                        ? "Listening..."
-                        : t("type_message")
-                  }
-                  className={`flex-1 bg-transparent px-2 md:px-4 py-3 md:py-4 min-h-[44px] md:min-h-[56px] max-h-32 md:max-h-56 focus:outline-none resize-none font-medium text-sm md:text-base tracking-tight leading-relaxed ${
-                    isLimitReached ? "cursor-not-allowed opacity-30" : ""
-                  } ${inputPlaceholder}`}
-                  rows={1}
-                  disabled={isLimitReached}
-                />
+                    className={`bg-transparent px-2 md:px-4 py-3 md:py-4 min-h-[44px] md:min-h-[56px] max-h-32 md:max-h-56 focus:outline-none resize-none font-medium text-sm md:text-base tracking-tight leading-relaxed ${
+                      isLimitReached ? "cursor-not-allowed opacity-30" : ""
+                    } ${inputPlaceholder}`}
+                    rows={1}
+                    disabled={isLimitReached}
+                  />
+                </div>
 
                 {/* Send button */}
                 <button

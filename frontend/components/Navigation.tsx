@@ -128,7 +128,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const toolsLinks = [
     { mode: AppMode.CHAT, icon: MessageSquare, label: t("chat") },
     { mode: AppMode.CALCULATOR, icon: Calculator, label: t("archery_calc") },
-    { mode: AppMode.FORM_ANALYSIS, icon: User, label: "Smart Analysis" },
+    { mode: AppMode.FORM_ANALYSIS, icon: User, label: t("smart_analysis") },
     { mode: AppMode.SCHEDULE, icon: Clock, label: "Schedule" },
     { mode: AppMode.EXERCISE, icon: Dumbbell, label: t("exercise") },
     { mode: AppMode.IMAGE_GEN, icon: ImageIcon, label: t("perfect_form") },

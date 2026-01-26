@@ -1545,6 +1545,9 @@ const App: React.FC = () => {
                         accentColor={settings.accentColor}
                         onSaveToHistory={saveHistory}
                         preloadedPlan={preloadedPlan}
+                        language={settings.language}
+                        userProfile={user}
+                        onUpdateUser={setUser}
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center p-6 text-center">

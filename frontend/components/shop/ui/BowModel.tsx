@@ -38,7 +38,8 @@ const BowModel: React.FC<Props> = ({
       onMouseLeave={() => setIsHovered(false)}
       style={{
         ...style,
-        minHeight: background ? "90vh" : isMobile ? "350px" : "500px",
+        height: "100%",
+        minHeight: background ? "90vh" : "auto",
       }}
     >
       {!background && (

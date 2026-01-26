@@ -81,6 +81,7 @@ export interface UserProfile {
     rankProgress: number;
     podiumFinishes: number;
   };
+  completedSessions?: number;
   activeDevices?: DeviceInfo[];
 }
 
@@ -133,6 +134,9 @@ export interface Exercise {
   sets: number;
   description: string;
   category?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  rest?: string;
 }
 
 export interface ExercisePlan {

@@ -37,15 +37,21 @@ type AuthRecaptchaVerifier = any;
 
 import { UserProfile } from '../types';
 
+// Firebase Configuration - Using environment variables for security
 const firebaseConfig = {
-  apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY || "AIzaSyAyz9eBWNEr8etDqgGOWwVx7REalDrKNV0",
-  authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN || "x10minds-ai.firebaseapp.com",
-  projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID || "x10minds-ai",
-  storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET || "x10minds-ai.firebasestorage.app",
-  messagingSenderId: (import.meta as any).env.VITE_FIREBASE_MESSAGING_SENDER_ID || "367222043450",
-  appId: (import.meta as any).env.VITE_FIREBASE_APP_ID || "1:367222043450:web:6b3b48ae74e74de22a1603",
-  measurementId: (import.meta as any).env.VITE_FIREBASE_MEASUREMENT_ID || "G-RQ898S1VSK"
+  apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY,
+  authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: (import.meta as any).env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: (import.meta as any).env.VITE_FIREBASE_APP_ID,
+  measurementId: (import.meta as any).env.VITE_FIREBASE_MEASUREMENT_ID
 };
+
+// Validate Firebase configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error("⚠️ Firebase configuration is incomplete! Check your .env file.");
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -69,9 +75,8 @@ if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' &&
   console.log("App Check skipped on localhost.");
 }
 
-// This checks if we are still using the old placeholder ID. 
-// Since the projectId is now "x10minds-ai", this will be false, enabling real Auth functions.
-const isPlaceholder = firebaseConfig.projectId === "studio-3934682319-a1fe4";
+// Check if Firebase is properly configured
+const isPlaceholder = !firebaseConfig.apiKey || !firebaseConfig.projectId;
 
 // Helper to wait for auth to settle on reload
 const waitForAuthInit = () => {

@@ -6,16 +6,19 @@ import {
 } from "@google/genai";
 import { Message } from "../types";
 
-// Initialize the client
-const apiKey =
-  (import.meta as any).env.VITE_GEMINI_API_KEY ||
-  "AIzaSyDdjkNUf-gUJO-cqcm6AF7vfKGrP42vaPE";
-const ai = new GoogleGenAI({ apiKey });
+// Initialize the client - API key should be set in .env file
+const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
 
-const TEXT_MODEL = "gemini-2.5-flash"; // Optimized for 2.0 Ultra-Performance
+if (!apiKey) {
+  console.error("⚠️ VITE_GEMINI_API_KEY is not set in environment variables!");
+}
+
+const ai = new GoogleGenAI({ apiKey: apiKey || "" });
+
+const TEXT_MODEL = "gemini-2.5-flash"; 
 const IMAGE_MODEL = "gemini-2.5-flash";
 const SEARCH_MODEL = "gemini-2.5-flash"; 
-
+const V_MODEL = "gemini-2.5-flash";
 const PRODUCT_CATALOG_SUMMARY = `
 - Hoyt Stratos 36 HBT (Bow, $1899) - Colors: Cobalt Blue, Brady Ellison Signature, Championship Red, Black Out
 - Win & Win Wiawis ATF-X (Bow, $950) - Colors: White, Black, Red, Blue. Sizes: 25", 27"
@@ -145,7 +148,7 @@ export const streamGeminiResponse = async (
   } else if (aiModel === "gemini-1.5-pro") {
     TEXT_MODEL_TO_USE = "gemini-1.5-pro";
   } else if (aiModel === "gpt-4o" || aiModel === "claude-3-5-sonnet") {
-    TEXT_MODEL_TO_USE = "gemini-2.0-flash";
+    TEXT_MODEL_TO_USE = "gemini-1.5-flash";
   }
 
   try {
@@ -279,7 +282,32 @@ export const generateChatTitle = async (firstMessage: string): Promise<string> =
 };
 
 export const analyzeArcheryImage = async (imagesBase64: string[], prompt: string): Promise<string> => {
-    return "Analysis feature currently under maintenance. Please use the main chat.";
+    try {
+        const parts = imagesBase64.map(img => {
+            const base64Data = img.includes(",") ? img.split(",")[1] : img;
+            return {
+                inlineData: {
+                    mimeType: "image/jpeg",
+                    data: base64Data,
+                },
+            };
+        });
+
+        parts.push({ text: prompt } as any);
+
+        const result = await ai.models.generateContent({
+            model: V_MODEL,
+            contents: [{ role: "user", parts: parts as Part[] }],
+            config: {
+                temperature: 0.4,
+            }
+        });
+
+        return result.text || "I was unable to analyze the provided images.";
+    } catch (error: any) {
+        console.error("Analysis Error:", error);
+        return `Uplink Error: ${error.message}. Please check your connection and try again.`;
+    }
 };
 
 export const enhancePrompt = async (originalPrompt: string): Promise<string> => {
@@ -473,7 +501,7 @@ export const askArcheryIntelligence = async (query: string): Promise<{
         Output only the answer. No conversational filler.`;
 
         const result = await ai.models.generateContent({
-            model: "gemini-2.0-flash",
+            model: TEXT_MODEL,
             contents: prompt,
             config: {
                 tools: [{ googleSearch: {} }],
@@ -505,6 +533,56 @@ export const askArcheryIntelligence = async (query: string): Promise<{
 };
 
 export const generateExercisePlan = async (bodyPart: string, level: string): Promise<string> => {
-   // Fallback stub for now, or implement if needed
-   return "[]";
+   try {
+     const prompt = `You are an elite Archery SPT (Specific Physical Training) & Biomechanics Coach (X10-INTEL). 
+     Your task is to generate a high-precision, technical SPT plan for: ${bodyPart} at ${level} difficulty.
+
+     Technical Requirements for ${level}:
+     - Beginner: Focus on 'T-Form' foundation, bone-on-bone support, and low-intensity isometric holds.
+     - Intermediate: Focus on 'Dynamic Spine' stabilization, scapular expansion (rhomboids/lower traps), and eccentric control.
+     - Advanced: Focus on 'Expansion through the clicker', high-load isometric tension, and frequency matching for arrow vibration damping.
+     - Advanced++ (Secret Elite): Extreme endurance holds, maximum power-to-weight ratio drills, and ultra-high neurological focus training.
+
+     Return ONLY a JSON array of Exercise objects. Each must have:
+     - "name": (Technical Archery Name, e.g., 'Scapular Retraction holds', 'Expansion Drills', 'Latissimus Engagement')
+     - "sets": number
+     - "reps": string (Range or specific count)
+     - "duration": number (Seconds for holds, 0 for rep-based)
+     - "rest": string (Rest between sets, e.g., '60s')
+     - "description": (Detailed biomechanical instructions: mention specific muscles like rhomboids, trapezius, serratus anterior, etc.)
+     - "category": ("Strength", "Endurance", "Mobility", "Technique")
+     - "imagePrompt": (Minimalist, cinematic 8k illustration of an archive performing the exercise. No text, No logos, No branding. Neutral background.)
+
+     Limit: Return exactly 5-8 exercises depending on the focus.`;
+
+     const result = await ai.models.generateContent({
+       model: TEXT_MODEL,
+       contents: prompt,
+     });
+
+     const responseText = result.text || "[]";
+     const firstBracket = responseText.indexOf('[');
+     const lastBracket = responseText.lastIndexOf(']');
+     
+     if (firstBracket === -1 || lastBracket === -1) return "[]";
+     
+     const jsonStr = responseText.substring(firstBracket, lastBracket + 1);
+     const exercises = JSON.parse(jsonStr);
+     
+     // Process image URLs using Pollinations
+     const processedExercises = exercises.map((ex: any) => {
+       const refinedPrompt = `Photorealistic professional archery athlete performing ${ex.name}, ${ex.category} training, professional sports photography, cinematic lighting, 8k, ultra-detailed, no text, no branding, no watermarks, clean training background`;
+       const encodedPrompt = encodeURIComponent(refinedPrompt);
+       return {
+         ...ex,
+         imageUrl: `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}&model=flux`,
+         videoUrl: `https://www.youtube.com/results?search_query=archery+exercise+${encodeURIComponent(ex.name)}`
+       };
+     });
+
+     return JSON.stringify(processedExercises);
+   } catch (error) {
+     console.error("Generate Plan Error:", error);
+     return "[]";
+   }
 };5
